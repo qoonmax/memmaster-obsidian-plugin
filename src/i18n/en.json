@@ -1,0 +1,72 @@
+{
+  "ribbonIcon": {
+    "openReviewFlashcards": "Open repetition flashcards"
+  },
+  "commands": {
+    "openReviewListView": "Open Review List View",
+    "markAsEasy": "Mark current card as Easy",
+    "markAsMedium": "Mark current card as Medium",
+    "markAsHard": "Mark current card as Hard",
+    "makeFlashcard": "Make current document a flashcard"
+  },
+  "settings": {
+    "flashcardSourceHeading": "Flashcard source settings",
+    "cardSource": {
+      "name": "Card source",
+      "desc": "Choose how to find flashcards for review: by tag or by folder location"
+    },
+    "tagName": {
+      "name": "Tag name",
+      "desc": "Enter the tag name to use",
+      "placeholder": "#flashcard"
+    },
+    "folderName": {
+      "name": "Folder name",
+      "desc": "Enter the folder path to use",
+      "placeholder": "Flashcards"
+    },
+    "reviewListHeading": "Review list settings",
+    "isBlurFlashcardText": {
+      "name": "Blur flashcard text",
+      "desc": "Blur flashcard content in review list until mouse hover"
+    },
+    "openInPreviewMode": {
+      "name": "Open cards in reading mode",
+      "desc": "Open flashcards from review list in reading mode (preview). Important: enabling this setting is required for review buttons to appear on cards."
+    },
+    "hotkeysHeading": "Hotkeys settings",
+    "hotkeysDesc": "Configure keyboard shortcuts for quick card review. Set hotkeys in Settings > Hotkeys > MemMaster.",
+    "sourceMode": {
+      "tag": "Tag",
+      "folder": "Folder"
+    }
+  },
+  "reviewFlashcard": {
+    "difficultyQuestion": "How difficult was this card?",
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard"
+  },
+  "reviewList": {
+    "viewTitle": "Repetition flashcards",
+    "searchPlaceholder": "Search flashcards...",
+    "noFlashcards": "No flashcards due for review.",
+    "noSearchResults": "No flashcards found matching your search.",
+    "overdueByDays": "Overdue by {{days}} days",
+    "dueToday": "Due today",
+    "sortLabel": "Sort:",
+    "sortOldestFirst": "Most overdue first",
+    "sortNewestFirst": "Least overdue first"
+  },
+  "notices": {
+    "notAFlashcard": "This document is not a flashcard",
+    "noActiveFile": "No active file",
+    "flashcardCreated": "Document marked as flashcard",
+    "tagAdded": "Tag added: {{tag}}",
+    "movedToFolder": "Moved to folder: {{folder}}",
+    "alreadyFlashcard": "This document is already a flashcard",
+    "cardMastered": "Card mastered! Metadata cleared.",
+    "cardUpdated": "Updated card: next review on {{date}}"
+  }
+}
+
