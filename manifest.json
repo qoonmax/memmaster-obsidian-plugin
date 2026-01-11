@@ -1,7 +1,7 @@
 {
 	"id": "memmaster",
 	"name": "MemMaster — Spaced Repetition",
-	"version": "1.0.1",
+	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "A spaced repetition plugin that helps you remember your notes by scheduling them for review at the right time.",
 	"author": "qoonmax",

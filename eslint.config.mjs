@@ -32,6 +32,8 @@ export default defineConfig([
         __filename: "readonly",
       },
     },
-    rules: {},
+    rules: {
+      "@typescript-eslint/require-await": "error",
+    },
   },
 ]);

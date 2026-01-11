@@ -422,5 +422,6 @@ export default class ReviewListView extends ItemView {
 			this.documentClickHandler = null;
 		}
 		this.containerEl.empty();
+		await Promise.resolve();
 	}
 }
