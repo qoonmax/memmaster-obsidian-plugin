@@ -6,13 +6,16 @@ import ru from './ru.json';
 
 export type Locale = 'en' | 'ru';
 
+// Recursive type for nested translation objects
+type TranslationValue = string | { [key: string]: TranslationValue };
+
 interface Translations {
-	[key: string]: any;
+	[key: string]: TranslationValue;
 }
 
 const translations: Record<Locale, Translations> = {
-	en,
-	ru,
+	en: en as Translations,
+	ru: ru as Translations,
 };
 
 export class I18n {
@@ -52,12 +55,12 @@ export class I18n {
 	 */
 	t(keyPath: string, variables?: Record<string, string | number>): string {
 		const keys = keyPath.split('.');
-		let value: any = this.translations;
+		let value: TranslationValue = this.translations;
 
 		// Navigate through the translation object
 		for (const key of keys) {
 			if (value && typeof value === 'object' && key in value) {
-				value = value[key];
+				value = (value as { [key: string]: TranslationValue })[key];
 			} else {
 				// If key not found, return the key itself as fallback
 				console.warn(`Translation key not found: ${keyPath}`);
@@ -83,7 +86,7 @@ export class I18n {
 	 * Replace {{variable}} placeholders with actual values
 	 */
 	private interpolate(template: string, variables: Record<string, string | number>): string {
-		return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+		return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) => {
 			return key in variables ? String(variables[key]) : match;
 		});
 	}

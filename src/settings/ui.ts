@@ -17,7 +17,9 @@ export default class MemMasterPluginSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		// Add heading for flashcard source settings
-		containerEl.createEl('h3', { text: i18n.t('settings.flashcardSourceHeading') });
+		new Setting(containerEl)
+			.setName(i18n.t('settings.flashcardSourceHeading'))
+			.setHeading();
 
 		// Dropdown for mode selection
 		new Setting(containerEl)
@@ -73,11 +75,10 @@ export default class MemMasterPluginSettingTab extends PluginSettingTab {
 				);
 		}
 
-		// Add separator after source fields
-		containerEl.createEl('hr');
-
 		// Add heading for review list settings
-		containerEl.createEl('h3', { text: i18n.t('settings.reviewListHeading') });
+		new Setting(containerEl)
+			.setName(i18n.t('settings.reviewListHeading'))
+			.setHeading();
 
 		// Add toggle for hidden flashcards
 		new Setting(containerEl)
@@ -109,16 +110,10 @@ export default class MemMasterPluginSettingTab extends PluginSettingTab {
 					})
 			);
 
-		// Add separator after review list settings
-		containerEl.createEl('hr');
-
 		// Add heading for hotkeys settings
-		containerEl.createEl('h3', { text: i18n.t('settings.hotkeysHeading') });
-		
-		// Add description for hotkeys
-		containerEl.createEl('p', { 
-			text: i18n.t('settings.hotkeysDesc'),
-			cls: 'setting-item-description'
-		});
+		new Setting(containerEl)
+			.setName(i18n.t('settings.hotkeysHeading'))
+			.setDesc(i18n.t('settings.hotkeysDesc'))
+			.setHeading();
 	}
 }

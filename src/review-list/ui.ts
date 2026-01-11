@@ -1,4 +1,4 @@
-import {ItemView, WorkspaceLeaf, MarkdownView} from 'obsidian';
+import {ItemView, WorkspaceLeaf, MarkdownView, setIcon} from 'obsidian';
 import MemMasterPlugin from '../main';
 import { getFlashcardsForReview } from '../core/finder';
 import { PLUGIN_EVENTS } from '../core/events';
@@ -6,7 +6,7 @@ import { PLUGIN_EVENTS } from '../core/events';
 export default class ReviewListView extends ItemView {
 	static VIEW_TYPE = 'review-list-view';
 	private plugin: MemMasterPlugin;
-	private searchQuery: string = ''; // Add search state
+	private searchQuery = ''; // Add search state
 	private sortOrder: 'oldest-first' | 'newest-first' = 'oldest-first'; // Add sort order state
 	private documentClickHandler: (() => void) | null = null; // Handler reference for cleanup
 
@@ -24,7 +24,7 @@ export default class ReviewListView extends ItemView {
 	}
 
 	// New method to render content
-	async renderContent() {
+	async renderContent(): Promise<void> {
 		const container = this.contentEl;
 		container.empty();
 
@@ -41,10 +41,7 @@ export default class ReviewListView extends ItemView {
 		const searchIcon = searchWrapper.createEl('span', {
 			cls: 'mm-search-icon',
 		});
-		searchIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-			<circle cx="11" cy="11" r="8"></circle>
-			<path d="m21 21-4.35-4.35"></path>
-		</svg>`;
+		setIcon(searchIcon, 'search');
 
 		const searchInput = searchWrapper.createEl('input', {
 			type: 'text',
@@ -64,7 +61,7 @@ export default class ReviewListView extends ItemView {
 			cls: 'mm-sort-wrapper',
 		});
 
-		const sortLabel = sortWrapper.createEl('label', {
+		sortWrapper.createEl('label', {
 			cls: 'mm-sort-label',
 			text: this.plugin.i18n.t('reviewList.sortLabel'),
 		});
@@ -88,7 +85,7 @@ export default class ReviewListView extends ItemView {
 		const dropdownArrow = selectedDisplay.createEl('span', {
 			cls: 'mm-dropdown-arrow',
 		});
-		dropdownArrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+		setIcon(dropdownArrow, 'chevron-down');
 
 		// Dropdown options container
 		const optionsContainer = customDropdown.createDiv({
@@ -205,8 +202,7 @@ export default class ReviewListView extends ItemView {
 
 		// Add "no results" message (initially hidden)
 		const noResultsMessage = container.createDiv({ 
-			cls: 'mm-no-search-results',
-			attr: { style: 'display: none;' }
+			cls: 'mm-no-search-results mm-hidden'
 		});
 		noResultsMessage.setText(this.plugin.i18n.t('reviewList.noSearchResults'));
 
@@ -245,7 +241,7 @@ export default class ReviewListView extends ItemView {
 			// Extract lines for tags and content
 			const lines = metadata.content.split('\n');
 			// Filter only lines with tags, excluding markdown headers
-			const tags = lines.filter((line) => {
+			const tagLines = lines.filter((line) => {
 				const trimmedLine = line.trim();
 				// Exclude lines that start with markdown headers (# , ## , ### etc.)
 				if (/^#+\s/.test(trimmedLine)) {
@@ -253,71 +249,44 @@ export default class ReviewListView extends ItemView {
 				}
 				return line.includes('#');
 			});
-			const tagsHTML = tags
-				.map((line) => {
-					return line.split(/\s+/)
-						.filter(word => {
-							// Only words that start with # and have at least one more character that is not #
-							return word.startsWith('#') && word.length > 1 && word[1] !== '#';
-						})
-						.map(tag => `<p>${tag}</p>`)
-						.join(' ');
-				})
-				.join(' ');
 
-			// Store tags as data attribute for search
-			const extractedTags = tags
+			// Extract individual tags as array
+			const extractedTagsList = tagLines
 				.flatMap((line) => {
 					return line.split(/\s+/)
 						.filter(word => word.startsWith('#') && word.length > 1 && word[1] !== '#');
-				})
-				.join(' ')
-				.toLowerCase();
-			card.setAttribute('data-tags', extractedTags);
+				});
+			
+			// Store tags as data attribute for search
+			card.setAttribute('data-tags', extractedTagsList.join(' ').toLowerCase());
 
 			// Remove tags and YAML from content
 			const contentWithoutTags = metadata.content
-			.replace(/^---[\s\S]*?---/, '') // Remove YAML frontmatter
-			.replace(/#[^\s#]+/g, '') // Remove all tags (# followed by non-whitespace, non-# characters)
-			.replace(/\n+/g, ' ') // Replace multiple newlines with space
-			.trim();
+				.replace(/^---[\s\S]*?---/, '') // Remove YAML frontmatter
+				.replace(/#[^\s#]+/g, '') // Remove all tags (# followed by non-whitespace, non-# characters)
+				.replace(/\n+/g, ' ') // Replace multiple newlines with space
+				.trim();
 
 			const truncatedContent = contentWithoutTags.slice(0, 128);
-			const fullHTML = `<div class="mm-card-tags">${tagsHTML}</div><p class="mm-card-text">${truncatedContent}</p>`;
 
-			const contentEl = card.createDiv();
-			contentEl.className = 'mm-card-content';
-			contentEl.innerHTML = fullHTML;
+			const contentEl = card.createDiv({ cls: 'mm-card-content' });
+			
+			// Create tags container
+			const tagsContainer = contentEl.createDiv({ cls: 'mm-card-tags' });
+			extractedTagsList.forEach(tag => {
+				tagsContainer.createEl('p', { text: tag });
+			});
+			
+			// Create text content
+			contentEl.createEl('p', { cls: 'mm-card-text', text: truncatedContent });
 
 			const button = card.createEl('span', {
 				cls: 'mm-open-card-button',
 			});
+			setIcon(button, 'eye');
 
-			button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-            </svg>`;
-
-			card.addEventListener('click', async () => {
-				await this.app.workspace.openLinkText(metadata.file.path, '/', false);
-				// Wait for file to open and switch to preview mode if setting is enabled
-				if (this.plugin.settings.openInPreviewMode) {
-					setTimeout(async () => {
-						const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-						if (view && view.file?.path === metadata.file.path) {
-							// Find the leaf containing this view
-							const leaves = this.app.workspace.getLeavesOfType('markdown');
-							const leaf = leaves.find(l => l.view === view);
-							if (leaf) {
-								const currentState = leaf.getViewState();
-								await leaf.setViewState({
-									type: 'markdown',
-									state: { ...currentState.state, mode: 'preview' }
-								});
-							}
-						}
-					}, 100);
-				}
+			card.addEventListener('click', () => {
+				void this.openCardFile(metadata.file.path);
 			});
 
 			// Add mouse move handler for interactive border effect
@@ -340,9 +309,9 @@ export default class ReviewListView extends ItemView {
 	}
 
 	// New method to filter cards based on search query
-	private filterCards() {
+	private filterCards(): void {
 		const cards = this.contentEl.querySelectorAll('.mm-card');
-		const noResultsMessage = this.contentEl.querySelector('.mm-no-search-results') as HTMLElement;
+		const noResultsMessage = this.contentEl.querySelector('.mm-no-search-results');
 		const query = this.searchQuery;
 		let hasVisibleCards = false;
 
@@ -351,24 +320,24 @@ export default class ReviewListView extends ItemView {
 			const content = card.getAttribute('data-content') || '';
 			const tags = card.getAttribute('data-tags') || '';
 
-			const matches = filename.includes(query) || 
-			               content.includes(query) || 
-			               tags.includes(query);
+			const matches = filename.includes(query) ||
+				content.includes(query) ||
+				tags.includes(query);
 
 			if (matches) {
-				(card as HTMLElement).style.display = '';
+				card.removeClass('mm-hidden');
 				hasVisibleCards = true;
 			} else {
-				(card as HTMLElement).style.display = 'none';
+				card.addClass('mm-hidden');
 			}
 		});
 
 		// Show/hide "no results" message
 		if (noResultsMessage) {
 			if (!hasVisibleCards && query.length > 0) {
-				noResultsMessage.style.display = 'block';
+				noResultsMessage.removeClass('mm-hidden');
 			} else {
-				noResultsMessage.style.display = 'none';
+				noResultsMessage.addClass('mm-hidden');
 			}
 		}
 	}
@@ -393,37 +362,60 @@ export default class ReviewListView extends ItemView {
 			}
 		});
 
-		// Re-append cards in sorted order
+			// Re-append cards in sorted order
 		cards.forEach(card => grid.appendChild(card));
 	}
 
-	async onOpen() {
+	private async openCardFile(filePath: string): Promise<void> {
+		await this.app.workspace.openLinkText(filePath, '/', false);
+		// Wait for file to open and switch to preview mode if setting is enabled
+		if (this.plugin.settings.openInPreviewMode) {
+			setTimeout(() => {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+				if (view && view.file?.path === filePath) {
+					// Find the leaf containing this view
+					const leaves = this.app.workspace.getLeavesOfType('markdown');
+					const leaf = leaves.find(l => l.view === view);
+					if (leaf) {
+						const currentState = leaf.getViewState();
+						void leaf.setViewState({
+							type: 'markdown',
+							state: { ...currentState.state, mode: 'preview' }
+						});
+					}
+				}
+			}, 100);
+		}
+	}
+
+	async onOpen(): Promise<void> {
 		this.containerEl.addClass('mm-view');
 		await this.renderContent();
+
+		// Wrap in arrow function to preserve proper typing
+		const refreshContent = (): void => {
+			void this.renderContent();
+		};
 
 		// Add event handler for activation of the tab
 		this.registerEvent(
 			this.app.workspace.on('active-leaf-change', (leaf) => {
-				if (leaf?.view === this) {
-					this.renderContent();
+				if (leaf?.view instanceof ReviewListView && leaf.view === this) {
+					refreshContent();
 				}
 			})
 		);
 
 		this.registerEvent(
-            this.plugin.events.on(PLUGIN_EVENTS.CARD_UPDATED, () => {
-                this.renderContent();
-            })
-        );
+			this.plugin.events.on(PLUGIN_EVENTS.CARD_UPDATED, refreshContent)
+		);
 
 		this.registerEvent(
-			this.plugin.events.on(PLUGIN_EVENTS.SETTINGS_UPDATED, () => {
-				this.renderContent();
-			})
+			this.plugin.events.on(PLUGIN_EVENTS.SETTINGS_UPDATED, refreshContent)
 		);
 	}
 
-	async onClose() {
+	async onClose(): Promise<void> {
 		// Remove document click handler to prevent memory leak
 		if (this.documentClickHandler) {
 			document.removeEventListener('click', this.documentClickHandler);

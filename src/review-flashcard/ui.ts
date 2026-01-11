@@ -18,28 +18,28 @@ export function createButtonContainer(file: TFile, plugin: MemMasterPlugin): HTM
 	const easyButton = document.createElement('button');
 	easyButton.className = 'mm-estimation-card-button mm-easy-button';
 	easyButton.textContent = plugin.i18n.t('reviewFlashcard.easy');
-	easyButton.addEventListener('click', async (e) => {
+	easyButton.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation(); // Prevent event bubbling
-		await updateCardMetadata(plugin, file, 'easy');
+		void updateCardMetadata(plugin, file, 'easy');
 	});
 
 	const mediumButton = document.createElement('button');
 	mediumButton.className = 'mm-estimation-card-button mm-medium-button';
 	mediumButton.textContent = plugin.i18n.t('reviewFlashcard.medium');
-	mediumButton.addEventListener('click', async (e) => {
+	mediumButton.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation();
-		await updateCardMetadata(plugin, file, 'medium');
+		void updateCardMetadata(plugin, file, 'medium');
 	});
 
 	const hardButton = document.createElement('button');
 	hardButton.className = 'mm-estimation-card-button mm-hard-button';
 	hardButton.textContent = plugin.i18n.t('reviewFlashcard.hard');
-	hardButton.addEventListener('click', async (e) => {
+	hardButton.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation();
-		await updateCardMetadata(plugin, file, 'hard');
+		void updateCardMetadata(plugin, file, 'hard');
 	});
 
 	buttonGroup.appendChild(easyButton);

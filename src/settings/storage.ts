@@ -18,7 +18,8 @@ const DEFAULT_SETTINGS: MemMasterPluginSettings = {
 
 // Exported functions for managing settings
 async function loadSettings(plugin: Plugin): Promise<MemMasterPluginSettings> {
-	return Object.assign({}, DEFAULT_SETTINGS, await plugin.loadData());
+	const data = await plugin.loadData() as Partial<MemMasterPluginSettings> | null;
+	return Object.assign({}, DEFAULT_SETTINGS, data ?? {});
 }
 
 async function saveSettings(plugin: Plugin, settings: MemMasterPluginSettings): Promise<void> {

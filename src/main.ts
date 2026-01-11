@@ -26,11 +26,11 @@ export default class MemMasterPlugin extends Plugin {
 		this.settings = await loadSettings(this);
 
 		// Create MutationObserver
-		this.observer = new MutationObserver((mutations) => {
+		this.observer = new MutationObserver((_mutations) => {
 			const activeLeaf = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (activeLeaf) {
 				// Full sync with cleanup
-				syncFlashcardButtons(activeLeaf, this, {
+				void syncFlashcardButtons(activeLeaf, this, {
 					cleanupMisplaced: true,
 					removeIfNoTag: true
 				});
@@ -93,7 +93,7 @@ export default class MemMasterPlugin extends Plugin {
 
 		// Rest of the code...
 		this.addRibbonIcon('square-library', this.i18n.t('ribbonIcon.openReviewFlashcards'), () => {
-			this.activateView();
+			void this.activateView();
 		});
 
 		this.registerView(
@@ -105,7 +105,7 @@ export default class MemMasterPlugin extends Plugin {
 			id: 'open-review-list-view',
 			name: this.i18n.t('commands.openReviewListView'),
 			callback: () => {
-				this.activateView();
+				void this.activateView();
 			},
 		});
 
@@ -117,7 +117,7 @@ export default class MemMasterPlugin extends Plugin {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile) {
 					if (!checking) {
-						this.markCardWithDifficulty(activeFile, 'easy');
+						void this.markCardWithDifficulty(activeFile, 'easy');
 					}
 					return true;
 				}
@@ -132,7 +132,7 @@ export default class MemMasterPlugin extends Plugin {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile) {
 					if (!checking) {
-						this.markCardWithDifficulty(activeFile, 'medium');
+						void this.markCardWithDifficulty(activeFile, 'medium');
 					}
 					return true;
 				}
@@ -147,7 +147,7 @@ export default class MemMasterPlugin extends Plugin {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile) {
 					if (!checking) {
-						this.markCardWithDifficulty(activeFile, 'hard');
+						void this.markCardWithDifficulty(activeFile, 'hard');
 					}
 					return true;
 				}
@@ -162,7 +162,7 @@ export default class MemMasterPlugin extends Plugin {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile) {
 					if (!checking) {
-						this.makeDocumentFlashcard(activeFile);
+						void this.makeDocumentFlashcard(activeFile);
 					}
 					return true;
 				}
@@ -176,12 +176,10 @@ export default class MemMasterPlugin extends Plugin {
 	onunload() {
 		// Disable observer
 		this.observer.disconnect();
-
-		this.app.workspace.detachLeavesOfType(ReviewListView.VIEW_TYPE);
 	}
 
 
-	private async activateView() {
+	private async activateView(): Promise<void> {
 		const leaf = this.app.workspace.getLeaf(true);
 
 		await leaf.setViewState({
@@ -189,7 +187,7 @@ export default class MemMasterPlugin extends Plugin {
 			active: true,
 		});
 
-		this.app.workspace.revealLeaf(leaf);
+		await this.app.workspace.revealLeaf(leaf);
 	}
 
 	async loadSettings() {
