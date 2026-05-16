@@ -23,6 +23,10 @@ export default defineConfig([
         clearInterval: "readonly",
         requestAnimationFrame: "readonly",
         cancelAnimationFrame: "readonly",
+        // Obsidian globals
+        activeWindow: "readonly",
+        createDiv: "readonly",
+        createEl: "readonly",
         // Node.js globals
         console: "readonly",
         process: "readonly",
