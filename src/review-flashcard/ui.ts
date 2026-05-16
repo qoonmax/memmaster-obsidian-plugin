@@ -5,37 +5,43 @@ import { isFileFlashcard } from '../core/finder';
 import { sleep } from '../core/utils';
 
 export function createButtonContainer(file: TFile, plugin: MemMasterPlugin): HTMLElement {
-	const buttonContainer = document.createElement('div');
-	buttonContainer.className = 'mm-estimation-card-buttons-container';
+	const buttonContainer = createDiv({
+		cls: 'mm-estimation-card-buttons-container',
+	});
 
-	const textButtonContainer = document.createElement('p');
-	textButtonContainer.className = 'mm-estimation-card-text';
-	textButtonContainer.textContent = plugin.i18n.t('reviewFlashcard.difficultyQuestion');
+	const textButtonContainer = createEl('p', {
+		cls: 'mm-estimation-card-text',
+		text: plugin.i18n.t('reviewFlashcard.difficultyQuestion'),
+	});
 
-	const buttonGroup = document.createElement('div');
-	buttonGroup.className = 'mm-estimation-card-buttons-block';
+	const buttonGroup = createDiv({
+		cls: 'mm-estimation-card-buttons-block',
+	});
 
-	const easyButton = document.createElement('button');
-	easyButton.className = 'mm-estimation-card-button mm-easy-button';
-	easyButton.textContent = plugin.i18n.t('reviewFlashcard.easy');
+	const easyButton = createEl('button', {
+		cls: 'mm-estimation-card-button mm-easy-button',
+		text: plugin.i18n.t('reviewFlashcard.easy'),
+	});
 	easyButton.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation(); // Prevent event bubbling
 		void updateCardMetadata(plugin, file, 'easy');
 	});
 
-	const mediumButton = document.createElement('button');
-	mediumButton.className = 'mm-estimation-card-button mm-medium-button';
-	mediumButton.textContent = plugin.i18n.t('reviewFlashcard.medium');
+	const mediumButton = createEl('button', {
+		cls: 'mm-estimation-card-button mm-medium-button',
+		text: plugin.i18n.t('reviewFlashcard.medium'),
+	});
 	mediumButton.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation();
 		void updateCardMetadata(plugin, file, 'medium');
 	});
 
-	const hardButton = document.createElement('button');
-	hardButton.className = 'mm-estimation-card-button mm-hard-button';
-	hardButton.textContent = plugin.i18n.t('reviewFlashcard.hard');
+	const hardButton = createEl('button', {
+		cls: 'mm-estimation-card-button mm-hard-button',
+		text: plugin.i18n.t('reviewFlashcard.hard'),
+	});
 	hardButton.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation();
@@ -89,7 +95,7 @@ export async function syncFlashcardButtons(
 	// If file is not a flashcard, optionally clean up and exit
 	if (!hasCardTag) {
 		if (removeIfNoTag) {
-			const existingContainers = document.querySelectorAll('.mm-estimation-card-buttons-container');
+			const existingContainers = view.containerEl.querySelectorAll('.mm-estimation-card-buttons-container');
 			existingContainers.forEach(container => container.remove());
 		}
 		return;

@@ -83,7 +83,7 @@ export async function updateCardMetadata(plugin: MemMasterPlugin, file: TFile, d
         "\n---\n";
 
     // Write back to file
-    await plugin.app.vault.modify(file, newFrontmatter + "\n" + body);
+    await plugin.app.vault.modify(file, newFrontmatter + body);
     new Notice(plugin.i18n.t('notices.cardUpdated', { date: metadata["memmaster-next-review"] }));
 
     // Refresh review list view
@@ -177,7 +177,7 @@ export async function makeFlashcard(plugin: MemMasterPlugin, file: TFile): Promi
                 .map(([key, value]) => `${key}: ${value}`)
                 .join("\n") +
             "\n---\n";
-        await plugin.app.vault.modify(file, newFrontmatter + "\n" + body);
+        await plugin.app.vault.modify(file, newFrontmatter + body);
         
         await plugin.app.fileManager.renameFile(file, newPath);
         new Notice(plugin.i18n.t('notices.flashcardCreated') + ' - ' + plugin.i18n.t('notices.movedToFolder', { folder: cleanFolderPath }));

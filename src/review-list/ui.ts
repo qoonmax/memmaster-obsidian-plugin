@@ -9,6 +9,7 @@ export default class ReviewListView extends ItemView {
 	private searchQuery = ''; // Add search state
 	private sortOrder: 'oldest-first' | 'newest-first' = 'oldest-first'; // Add sort order state
 	private documentClickHandler: (() => void) | null = null; // Handler reference for cleanup
+	private documentClickHandlerDocument: Document | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MemMasterPlugin) {
 		super(leaf);
@@ -38,7 +39,7 @@ export default class ReviewListView extends ItemView {
 		});
 
 		// Add search icon
-		const searchIcon = searchWrapper.createEl('span', {
+		const searchIcon = searchWrapper.createSpan({
 			cls: 'mm-search-icon',
 		});
 		setIcon(searchIcon, 'search');
@@ -75,14 +76,14 @@ export default class ReviewListView extends ItemView {
 			cls: 'mm-dropdown-selected',
 		});
 
-		const selectedText = selectedDisplay.createEl('span', {
+		const selectedText = selectedDisplay.createSpan({
 			cls: 'mm-dropdown-selected-text',
 			text: this.sortOrder === 'oldest-first' 
 				? this.plugin.i18n.t('reviewList.sortOldestFirst')
 				: this.plugin.i18n.t('reviewList.sortNewestFirst'),
 		});
 
-		const dropdownArrow = selectedDisplay.createEl('span', {
+		const dropdownArrow = selectedDisplay.createSpan({
 			cls: 'mm-dropdown-arrow',
 		});
 		setIcon(dropdownArrow, 'chevron-down');
@@ -146,13 +147,14 @@ export default class ReviewListView extends ItemView {
 
 		// Close dropdown when clicking outside
 		// Remove previous handler if exists to prevent memory leak
-		if (this.documentClickHandler) {
-			document.removeEventListener('click', this.documentClickHandler);
+		if (this.documentClickHandler && this.documentClickHandlerDocument) {
+			this.documentClickHandlerDocument.removeEventListener('click', this.documentClickHandler);
 		}
 		this.documentClickHandler = () => {
 			customDropdown.removeClass('mm-dropdown-open');
 		};
-		document.addEventListener('click', this.documentClickHandler);
+		this.documentClickHandlerDocument = this.contentEl.ownerDocument;
+		this.documentClickHandlerDocument.addEventListener('click', this.documentClickHandler);
 
 		// Add mouse move handler for interactive border effect on selected (closed state)
 		selectedDisplay.addEventListener('mousemove', (e) => {
@@ -230,7 +232,7 @@ export default class ReviewListView extends ItemView {
 
 			// Add date of next review
 			if (metadata.nextReview) {
-				headerContainer.createEl('span', {
+				headerContainer.createSpan({
 					cls: 'mm-review-info',
 					text: daysOverdue > 0 
 						? this.plugin.i18n.t('reviewList.overdueByDays', { days: daysOverdue.toString() })
@@ -280,7 +282,7 @@ export default class ReviewListView extends ItemView {
 			// Create text content
 			contentEl.createEl('p', { cls: 'mm-card-text', text: truncatedContent });
 
-			const button = card.createEl('span', {
+			const button = card.createSpan({
 				cls: 'mm-open-card-button',
 			});
 			setIcon(button, 'eye');
@@ -370,7 +372,7 @@ export default class ReviewListView extends ItemView {
 		await this.app.workspace.openLinkText(filePath, '/', false);
 		// Wait for file to open and switch to preview mode if setting is enabled
 		if (this.plugin.settings.openInPreviewMode) {
-			setTimeout(() => {
+			activeWindow.setTimeout(() => {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (view && view.file?.path === filePath) {
 					// Find the leaf containing this view
@@ -417,9 +419,10 @@ export default class ReviewListView extends ItemView {
 
 	async onClose(): Promise<void> {
 		// Remove document click handler to prevent memory leak
-		if (this.documentClickHandler) {
-			document.removeEventListener('click', this.documentClickHandler);
+		if (this.documentClickHandler && this.documentClickHandlerDocument) {
+			this.documentClickHandlerDocument.removeEventListener('click', this.documentClickHandler);
 			this.documentClickHandler = null;
+			this.documentClickHandlerDocument = null;
 		}
 		this.containerEl.empty();
 		await Promise.resolve();
