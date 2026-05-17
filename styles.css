@@ -573,6 +573,36 @@
     opacity: 1;
 }
 
+.mm-card-length-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-bottom: 1.25rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: var(--radius-m);
+    background: color-mix(in srgb, var(--interactive-normal) 10%, var(--background-primary));
+    color: var(--text-muted);
+    font-family: var(--font-interface), serif;
+    font-size: var(--font-ui-small);
+    line-height: 1.45;
+}
+
+.mm-card-length-warning-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: var(--text-warning);
+    margin-top: 0.05rem;
+}
+
+.mm-card-length-warning-icon svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.mm-card-length-warning-text {
+    min-width: 0;
+}
+
 .mm-estimation-card-buttons-block {
     display: flex;
     justify-content: center;

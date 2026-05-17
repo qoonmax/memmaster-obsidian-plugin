@@ -1,10 +1,51 @@
-import { TFile, MarkdownView } from 'obsidian';
+import { TFile, MarkdownView, setIcon } from 'obsidian';
 import MemMasterPlugin from '../main';
 import { updateCardMetadata } from '../core/scheduler';
 import { isFileFlashcard } from '../core/finder';
 import { sleep } from '../core/utils';
 
-export function createButtonContainer(file: TFile, plugin: MemMasterPlugin): HTMLElement {
+const MAX_REVIEW_NOTE_LENGTH = 4096;
+
+function getReviewNoteLength(content: string): number {
+	// Frontmatter contains MemMaster metadata, so it should not count as card content.
+	return content.replace(/^---\n[\s\S]*?\n---/, '').trim().length;
+}
+
+function updateNoteLengthWarning(container: HTMLElement, contentLength: number, plugin: MemMasterPlugin): void {
+	const shouldShowWarning = contentLength > MAX_REVIEW_NOTE_LENGTH;
+	const existingWarning = container.querySelector('.mm-card-length-warning');
+
+	// Avoid touching the DOM when nothing changed; MutationObserver would otherwise sync again.
+	if (
+		container.dataset.mmReviewNoteLength === contentLength.toString()
+		&& shouldShowWarning === Boolean(existingWarning)
+	) {
+		return;
+	}
+
+	container.dataset.mmReviewNoteLength = contentLength.toString();
+	existingWarning?.remove();
+
+	if (shouldShowWarning) {
+		const warning = createDiv({
+			cls: 'mm-card-length-warning',
+		});
+		const warningIcon = warning.createSpan({
+			cls: 'mm-card-length-warning-icon',
+		});
+		setIcon(warningIcon, 'alert-triangle');
+		warning.createSpan({
+			cls: 'mm-card-length-warning-text',
+			text: plugin.i18n.t('reviewFlashcard.lengthWarning', {
+				count: contentLength,
+				limit: MAX_REVIEW_NOTE_LENGTH,
+			}),
+		});
+		container.prepend(warning);
+	}
+}
+
+export function createButtonContainer(file: TFile, plugin: MemMasterPlugin, contentLength: number): HTMLElement {
 	const buttonContainer = createDiv({
 		cls: 'mm-estimation-card-buttons-container',
 	});
@@ -54,6 +95,7 @@ export function createButtonContainer(file: TFile, plugin: MemMasterPlugin): HTM
 
 	buttonContainer.appendChild(textButtonContainer);
 	buttonContainer.appendChild(buttonGroup);
+	updateNoteLengthWarning(buttonContainer, contentLength, plugin);
 
 	// Add mouse move handler for interactive border effect
 	buttonContainer.addEventListener('mousemove', (e) => {
@@ -105,9 +147,12 @@ export async function syncFlashcardButtons(
 	const containerEl = view.previewMode?.containerEl ?? view.containerEl;
 	const previewSections = containerEl.querySelectorAll('.markdown-preview-section');
 	const file = view.file;
+	// Read once per sync and reuse for all preview sections in the same note.
+	const content = await plugin.app.vault.cachedRead(file);
+	const contentLength = getReviewNoteLength(content);
 
 	previewSections.forEach(section => {
-		let container = section.querySelector('.mm-estimation-card-buttons-container');
+		let container = section.querySelector<HTMLElement>('.mm-estimation-card-buttons-container');
 
 		// Clean up misplaced containers if option is enabled
 		if (cleanupMisplaced && container && container.parentElement !== section) {
@@ -117,8 +162,10 @@ export async function syncFlashcardButtons(
 
 		// Create container if it doesn't exist
 		if (!container) {
-			const buttonContainer = createButtonContainer(file, plugin);
+			const buttonContainer = createButtonContainer(file, plugin, contentLength);
 			section.appendChild(buttonContainer);
+		} else {
+			updateNoteLengthWarning(container, contentLength, plugin);
 		}
 	});
 }

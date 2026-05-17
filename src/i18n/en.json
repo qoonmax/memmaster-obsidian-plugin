@@ -43,6 +43,7 @@
   },
   "reviewFlashcard": {
     "difficultyQuestion": "How difficult was this card?",
+    "lengthWarning": "This note is {{count}}/{{limit}} characters. Shorter notes work better for review.",
     "easy": "Easy",
     "medium": "Medium",
     "hard": "Hard"
@@ -69,4 +70,3 @@
     "cardUpdated": "Updated card: next review on {{date}}"
   }
 }
-
