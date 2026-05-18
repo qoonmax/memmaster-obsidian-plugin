@@ -25,6 +25,7 @@
     gap: 2px;
     width: fit-content;
     max-width: calc(100% - 1rem);
+    box-sizing: border-box;
     margin: 0.5rem 0.5rem 0 auto;
     padding: 2px;
     border: 1px solid var(--tab-outline-color);
@@ -94,6 +95,9 @@
 
 .mm-view .mm-tab-text {
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .mm-view .mm-tab-button-active,
@@ -104,10 +108,13 @@
 
 .mm-view .mm-search-container {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     align-items: center;
     gap: 1rem;
     padding: 0.5rem;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .mm-view .mm-search-container input {
@@ -116,7 +123,8 @@
 
 .mm-view .mm-search-wrapper {
     position: relative;
-    flex: 1;
+    flex: 1 1 220px;
+    min-width: 0;
 }
 
 .mm-view .mm-sort-wrapper {
@@ -124,6 +132,8 @@
     align-items: center;
     gap: 0.5rem;
     position: relative;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .mm-view .mm-sort-label {
@@ -153,6 +163,7 @@
     transition: background-color 0.2s ease;
     user-select: none;
     overflow: visible;
+    min-width: 0;
 }
 
 .mm-view .mm-dropdown-selected::before {
@@ -361,6 +372,9 @@
 }
 
 .mm-view .mm-search-input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     padding: 0.5rem 0.5rem 0.5rem 2.5rem;
     background-color: var(--tab-container-background);
     font-size: var(--font-ui-small);
@@ -378,6 +392,7 @@
     background-image: radial-gradient(var(--nav-indentation-guide-color) .65px, var(--background-primary) .65px) !important;
     background-size: 27px 27px;
     background-color: var(--background-primary)!important;
+    container: mm-review-list / inline-size;
 }
 
 .mm-view .mm-review-info {
@@ -586,22 +601,25 @@
  * Responsive styles for mobile devices
  */
 
- @media (max-width: 600px) {
+@media (max-width: 700px) {
     .mm-view .mm-tabs-container {
-        margin: 0.5rem 0.5rem 0 auto;
+        width: calc(100% - 1rem);
+        margin: 0.5rem;
     }
 
     .mm-view .mm-tab-button {
         flex: 1;
+        min-width: 0;
     }
 
     .mm-view .mm-search-container {
         flex-direction: column;
         align-items: stretch;
-        gap: 0.5rem;
+        gap: 0.6rem;
     }
     
     .mm-view .mm-search-wrapper {
+        flex: none;
         width: 100%;
         max-width: none;
     }
@@ -613,11 +631,57 @@
     }
 
     .mm-view .mm-sort-wrapper {
-        justify-content: space-between;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.35rem;
     }
 
     .mm-view .mm-custom-dropdown {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .mm-view .mm-card-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+@container mm-review-list (max-width: 700px) {
+    .mm-view .mm-tabs-container {
+        width: calc(100% - 1rem);
+        margin: 0.5rem;
+    }
+
+    .mm-view .mm-tab-button {
         flex: 1;
+        min-width: 0;
+    }
+
+    .mm-view .mm-search-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .mm-view .mm-search-wrapper {
+        flex: none;
+        width: 100%;
+        max-width: none;
+    }
+    
+    .mm-view .mm-search-input {
+        background-color: var(--background-primary)!important;
+    }
+
+    .mm-view .mm-sort-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.35rem;
+    }
+
+    .mm-view .mm-custom-dropdown {
+        width: 100%;
+        min-width: 0;
     }
 
     .mm-view .mm-card-grid {
@@ -637,6 +701,7 @@
     margin-top: 2rem;
     border: var(--tab-outline-width) solid var(--tab-outline-color);
     transition: border-color 0.3s ease;
+    container: mm-review-actions / inline-size;
 }
 
 .mm-estimation-card-buttons-container::before {
@@ -762,4 +827,40 @@
 .mm-hard-button:hover {
     background-color: #F44336;
     color: white;
+}
+
+@media (max-width: 700px) {
+    .mm-estimation-card-buttons-block {
+        flex-direction: column;
+    }
+
+    .mm-estimation-card-button:hover {
+        width: 100%;
+    }
+
+    .mm-card-length-warning {
+        align-items: center;
+    }
+
+    .mm-card-length-warning-icon {
+        margin-top: 0;
+    }
+}
+
+@container mm-review-actions (max-width: 520px) {
+    .mm-estimation-card-buttons-block {
+        flex-direction: column;
+    }
+
+    .mm-estimation-card-button:hover {
+        width: 100%;
+    }
+
+    .mm-card-length-warning {
+        align-items: center;
+    }
+
+    .mm-card-length-warning-icon {
+        margin-top: 0;
+    }
 }
