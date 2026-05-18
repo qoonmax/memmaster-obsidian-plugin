@@ -9,6 +9,8 @@ interface ParsedContent {
     body: string;
 }
 
+const MAX_REVIEW_STAGE = 10;
+
 // New function to extract and parse frontmatter
 function parseFrontmatter(content: string): ParsedContent {
     // Extract YAML frontmatter
@@ -32,16 +34,50 @@ function parseFrontmatter(content: string): ParsedContent {
     return { metadata, body };
 }
 
+function buildContentWithFrontmatter(metadata: Record<string, string>, body: string): string {
+    const newFrontmatter =
+        "---\n" +
+        Object.entries(metadata)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join("\n") +
+        "\n---\n";
+
+    return newFrontmatter + body;
+}
+
+function buildContentWithOptionalFrontmatter(metadata: Record<string, string>, body: string): string {
+    if (Object.keys(metadata).length === 0) {
+        return body;
+    }
+
+    return buildContentWithFrontmatter(metadata, body);
+}
+
+function clearMemMasterMetadata(metadata: Record<string, string>): void {
+    delete metadata["memmaster-next-review"];
+    delete metadata["memmaster-stage"];
+    delete metadata["memmaster-completed"];
+    delete metadata["memmaster-completed-at"];
+}
+
 export async function updateCardMetadata(plugin: MemMasterPlugin, file: TFile, difficulty: string) {
     const content = await plugin.app.vault.read(file);
 
     // Extract YAML frontmatter
     const { metadata, body } = parseFrontmatter(content);
 
+    if (metadata["memmaster-completed"]?.toLowerCase() === "true" || metadata["memmaster-completed-at"]) {
+        new Notice(plugin.i18n.t('notices.cardAlreadyMastered'));
+        return;
+    }
+
     // Update stage and review date
     const now = new Date();
     let nextInterval: number;
-    let stage = parseInt(metadata["memmaster-stage"] || "0");
+    let stage = parseInt(metadata["memmaster-stage"] || "0", 10);
+    if (Number.isNaN(stage)) {
+        stage = 0;
+    }
 
     if (difficulty === "easy") {
         nextInterval = Math.pow(2, stage);
@@ -58,10 +94,14 @@ export async function updateCardMetadata(plugin: MemMasterPlugin, file: TFile, d
         stage++;
     }
 
-    // Check if stage is above 10
-    if (stage > 10) {
-        // Remove metadata by removing the entire frontmatter
-        await plugin.app.vault.modify(file, body);
+    // Mark the card as completed after the last review stage.
+    if (stage > MAX_REVIEW_STAGE) {
+        delete metadata["memmaster-next-review"];
+        metadata["memmaster-stage"] = stage.toString();
+        metadata["memmaster-completed"] = "true";
+        metadata["memmaster-completed-at"] = now.toISOString().split("T")[0];
+
+        await plugin.app.vault.modify(file, buildContentWithFrontmatter(metadata, body));
         new Notice(plugin.i18n.t('notices.cardMastered'));
 
         // Refresh review list view
@@ -73,21 +113,28 @@ export async function updateCardMetadata(plugin: MemMasterPlugin, file: TFile, d
     const nextDate = new Date(now.getTime() + nextInterval * 24 * 60 * 60 * 1000);
     metadata["memmaster-next-review"] = nextDate.toISOString().split("T")[0];
     metadata["memmaster-stage"] = stage.toString();
-
-    // Form new YAML
-    const newFrontmatter =
-        "---\n" +
-        Object.entries(metadata)
-            .map(([key, value]) => `${key}: ${value}`)
-            .join("\n") +
-        "\n---\n";
+    delete metadata["memmaster-completed"];
+    delete metadata["memmaster-completed-at"];
 
     // Write back to file
-    await plugin.app.vault.modify(file, newFrontmatter + body);
+    await plugin.app.vault.modify(file, buildContentWithFrontmatter(metadata, body));
     new Notice(plugin.i18n.t('notices.cardUpdated', { date: metadata["memmaster-next-review"] }));
 
     // Refresh review list view
     plugin.events.trigger(PLUGIN_EVENTS.CARD_UPDATED);
+}
+
+export async function resetCardReview(plugin: MemMasterPlugin, file: TFile): Promise<boolean> {
+    const content = await plugin.app.vault.read(file);
+    const { metadata, body } = parseFrontmatter(content);
+
+    clearMemMasterMetadata(metadata);
+
+    await plugin.app.vault.modify(file, buildContentWithOptionalFrontmatter(metadata, body));
+    new Notice(plugin.i18n.t('notices.cardReset'));
+    plugin.events.trigger(PLUGIN_EVENTS.CARD_UPDATED);
+
+    return true;
 }
 
 export async function makeFlashcard(plugin: MemMasterPlugin, file: TFile): Promise<boolean> {
@@ -98,6 +145,8 @@ export async function makeFlashcard(plugin: MemMasterPlugin, file: TFile): Promi
     const now = new Date();
     metadata["memmaster-next-review"] = now.toISOString().split("T")[0];
     metadata["memmaster-stage"] = "0";
+    delete metadata["memmaster-completed"];
+    delete metadata["memmaster-completed-at"];
 
     if (plugin.settings.sourceMode === 'tag') {
         // Add tag to content

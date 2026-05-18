@@ -7,6 +7,8 @@ export interface CardMetadata {
     stage: string;
     file: TFile;
     content: string;
+    completed: boolean;
+    completedAt: string;
 }
 
 /**
@@ -52,6 +54,18 @@ export async function isFileFlashcard(plugin: MemMasterPlugin, file: TFile): Pro
     return hasTagInContent(content, plugin.settings.tagName);
 }
 
+export function isCardCompleted(metadata: CardMetadata): boolean {
+    const stage = parseInt(metadata.stage, 10);
+    return metadata.completed || Boolean(metadata.completedAt) || (!Number.isNaN(stage) && stage > 10);
+}
+
+export async function isFileCompleted(plugin: MemMasterPlugin, file: TFile): Promise<boolean> {
+    const content = await plugin.app.vault.cachedRead(file);
+    const metadata = extractMetadata(content, file);
+
+    return metadata ? isCardCompleted(metadata) : false;
+}
+
 // Extract metadata from file content
 export function extractMetadata(content: string, file: TFile): CardMetadata | null {
     const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
@@ -64,12 +78,16 @@ export function extractMetadata(content: string, file: TFile): CardMetadata | nu
     const frontmatter = frontmatterMatch[1];
     let hasNextReview = false;
     let hasStage = false;
+    let hasCompleted = false;
+    let hasCompletedAt = false;
 
     const metadata: CardMetadata = {
         nextReview: '',
         stage: '0',
         file: file,
-        content: content
+        content: content,
+        completed: false,
+        completedAt: ''
     };
 
     frontmatter.split("\n").forEach((line) => {
@@ -87,10 +105,18 @@ export function extractMetadata(content: string, file: TFile): CardMetadata | nu
             metadata.stage = value;
             hasStage = true;
         }
+        if (key === "memmaster-completed") {
+            metadata.completed = value.toLowerCase() === 'true';
+            hasCompleted = true;
+        }
+        if (key === "memmaster-completed-at") {
+            metadata.completedAt = value;
+            hasCompletedAt = true;
+        }
     });
 
-    // Return null if there are no both required fields
-    if (!hasNextReview || !hasStage) {
+    // Ignore unrelated frontmatter that does not belong to MemMaster.
+    if ((!hasNextReview || !hasStage) && !hasCompleted && !hasCompletedAt) {
         return null;
     }
 
@@ -117,6 +143,17 @@ export function sortFlashcards(cards: CardMetadata[]): CardMetadata[] {
     });
 }
 
+export function sortCompletedFlashcards(cards: CardMetadata[]): CardMetadata[] {
+    return cards.sort((a, b) => {
+        const completedAtA = new Date(a.completedAt).getTime();
+        const completedAtB = new Date(b.completedAt).getTime();
+        const timeA = Number.isNaN(completedAtA) ? 0 : completedAtA;
+        const timeB = Number.isNaN(completedAtB) ? 0 : completedAtB;
+
+        return timeB - timeA;
+    });
+}
+
 // Get all flashcards that are due for review
 export async function getFlashcardsForReview(plugin: MemMasterPlugin): Promise<CardMetadata[]> {
     const files = plugin.app.vault.getMarkdownFiles();
@@ -129,11 +166,17 @@ export async function getFlashcardsForReview(plugin: MemMasterPlugin): Promise<C
             const content = await plugin.app.vault.cachedRead(file);
             // Extract metadata; if none, treat as unscheduled (due today)
             const extracted = extractMetadata(content, file);
+            if (extracted && isCardCompleted(extracted)) {
+                continue;
+            }
+
             const metadata = extracted ?? {
                 nextReview: '',
                 stage: '0',
                 file,
-                content
+                content,
+                completed: false,
+                completedAt: ''
             };
             if (isCardDueForReview(metadata)) {
                 cardMetadata.push(metadata);
@@ -143,4 +186,24 @@ export async function getFlashcardsForReview(plugin: MemMasterPlugin): Promise<C
 
     // Sort cards
     return sortFlashcards(cardMetadata);
+}
+
+export async function getCompletedFlashcards(plugin: MemMasterPlugin): Promise<CardMetadata[]> {
+    const files = plugin.app.vault.getMarkdownFiles();
+    const cardMetadata: CardMetadata[] = [];
+
+    for (const file of files) {
+        const shouldInclude = await isFileFlashcard(plugin, file);
+
+        if (shouldInclude) {
+            const content = await plugin.app.vault.cachedRead(file);
+            const metadata = extractMetadata(content, file);
+
+            if (metadata && isCardCompleted(metadata)) {
+                cardMetadata.push(metadata);
+            }
+        }
+    }
+
+    return sortCompletedFlashcards(cardMetadata);
 }

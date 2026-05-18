@@ -46,18 +46,29 @@
     "lengthWarning": "This note is {{count}}/{{limit}} characters. Shorter notes work better for review.",
     "easy": "Easy",
     "medium": "Medium",
-    "hard": "Hard"
+    "hard": "Hard",
+    "completedReviewAction": "This card is completed. Clear metadata to review it again.",
+    "reviewAgain": "Review again"
   },
   "reviewList": {
     "viewTitle": "Repetition flashcards",
+    "tabs": {
+      "review": "For review",
+      "completed": "Completed"
+    },
     "searchPlaceholder": "Search flashcards...",
     "noFlashcards": "No flashcards due for review.",
+    "noCompletedFlashcards": "No completed flashcards yet.",
     "noSearchResults": "No flashcards found matching your search.",
     "overdueByDays": "Overdue by {{days}} days",
     "dueToday": "Due today",
+    "completed": "Completed",
+    "completedOn": "Completed {{date}}",
     "sortLabel": "Sort:",
     "sortOldestFirst": "Most overdue first",
-    "sortNewestFirst": "Least overdue first"
+    "sortNewestFirst": "Least overdue first",
+    "sortCompletedNewestFirst": "Recently completed first",
+    "sortCompletedOldestFirst": "Oldest completed first"
   },
   "notices": {
     "notAFlashcard": "This document is not a flashcard",
@@ -66,7 +77,9 @@
     "tagAdded": "Tag added: {{tag}}",
     "movedToFolder": "Moved to folder: {{folder}}",
     "alreadyFlashcard": "This document is already a flashcard",
-    "cardMastered": "Card mastered! Metadata cleared.",
+    "cardMastered": "Card mastered! Added to completed.",
+    "cardAlreadyMastered": "This card is already completed.",
+    "cardReset": "Metadata cleared. This card can be reviewed again.",
     "cardUpdated": "Updated card: next review on {{date}}"
   }
 }

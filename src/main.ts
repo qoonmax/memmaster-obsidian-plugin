@@ -6,7 +6,7 @@ import ReviewListView from './review-list/ui';
 import { syncFlashcardButtons } from './review-flashcard/ui';
 import { I18n } from './i18n/i18n';
 import { updateCardMetadata, makeFlashcard } from './core/scheduler';
-import { isFileFlashcard } from './core/finder';
+import { isFileCompleted, isFileFlashcard } from './core/finder';
 import { sleep } from './core/utils';
 
 export default class MemMasterPlugin extends Plugin {
@@ -204,6 +204,12 @@ export default class MemMasterPlugin extends Plugin {
 		
 		if (!isFlashcard) {
 			new Notice(this.i18n.t('notices.notAFlashcard'));
+			return;
+		}
+
+		const isCompleted = await isFileCompleted(this, file);
+		if (isCompleted) {
+			new Notice(this.i18n.t('notices.cardAlreadyMastered'));
 			return;
 		}
 

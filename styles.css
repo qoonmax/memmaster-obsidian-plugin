@@ -18,6 +18,90 @@
     flex-direction: column; 
 }
 
+.mm-view .mm-tabs-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    width: fit-content;
+    max-width: calc(100% - 1rem);
+    margin: 0.5rem 0.5rem 0 auto;
+    padding: 2px;
+    border: 1px solid var(--tab-outline-color);
+    border-radius: 8px;
+    background-color: var(--tab-container-background);
+}
+
+.mm-view .mm-tabs-container::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    border-radius: 8px;
+    padding: 1px;
+    background: radial-gradient(
+        180px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        color-mix(in srgb, var(--interactive-accent) 90%, transparent),
+        transparent 45%
+    );
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.mm-view .mm-tabs-container:hover::before {
+    opacity: 1;
+}
+
+.mm-view .mm-tab-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    height: 25px!important;
+    padding: 0.35rem 0.75rem;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    line-height: 1.2;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.mm-view .mm-tab-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.mm-view .mm-tab-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.mm-view .mm-tab-text {
+    min-width: 0;
+}
+
+.mm-view .mm-tab-button-active,
+.mm-view .mm-tab-button-active:hover {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
 .mm-view .mm-search-container {
     display: flex;
     justify-content: flex-end;
@@ -325,6 +409,11 @@
     -webkit-mask-repeat: no-repeat;
 }
 
+.mm-view .mm-completed-info::before {
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'%3E%3C/path%3E%3C/svg%3E");
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'%3E%3C/path%3E%3C/svg%3E");
+}
+
 .mm-view .mm-card-grid {
     opacity: 85%;
     display: grid;
@@ -498,6 +587,14 @@
  */
 
  @media (max-width: 600px) {
+    .mm-view .mm-tabs-container {
+        margin: 0.5rem 0.5rem 0 auto;
+    }
+
+    .mm-view .mm-tab-button {
+        flex: 1;
+    }
+
     .mm-view .mm-search-container {
         flex-direction: column;
         align-items: stretch;
@@ -609,6 +706,10 @@
     gap: 10px;
 }
 
+.mm-completed-card-actions-container .mm-estimation-card-buttons-block {
+    justify-content: stretch;
+}
+
 .mm-estimation-card-button {
     width: 100%;
 
@@ -633,6 +734,19 @@
 .mm-estimation-card-button:hover {
     width: 120%;
     background-color: var(--background-modifier-hover);
+}
+
+.mm-reset-card-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+}
+
+.mm-reset-card-button:hover {
+    width: 100%;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
 }
 
 .mm-easy-button:hover {
