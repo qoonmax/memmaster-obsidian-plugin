@@ -1,7 +1,7 @@
 import { TFile, MarkdownView, setIcon } from 'obsidian';
 import MemMasterPlugin from '../main';
 import { resetCardReview, updateCardMetadata } from '../core/scheduler';
-import { isFileCompleted, isFileFlashcard } from '../core/finder';
+import { extractMetadata, isCardCompleted, isCardDueForReview, isFileFlashcard } from '../core/finder';
 import { sleep } from '../core/utils';
 
 const MAX_REVIEW_NOTE_LENGTH = 4096;
@@ -192,9 +192,11 @@ export async function syncFlashcardButtons(
 	const containerEl = view.previewMode?.containerEl ?? view.containerEl;
 	const previewSections = containerEl.querySelectorAll('.markdown-preview-section');
 	const file = view.file;
-	const isCompleted = await isFileCompleted(plugin, file);
 	// Read once per sync and reuse for all preview sections in the same note.
 	const content = await plugin.app.vault.cachedRead(file);
+	const metadata = extractMetadata(content, file);
+	const isCompleted = metadata ? isCardCompleted(metadata) : false;
+	const isDueForReview = !metadata || isCardDueForReview(metadata);
 	const contentLength = getReviewNoteLength(content);
 
 	previewSections.forEach(section => {
@@ -204,6 +206,11 @@ export async function syncFlashcardButtons(
 		if (cleanupMisplaced && container && container.parentElement !== section) {
 			container.remove();
 			container = null;
+		}
+
+		if (!isCompleted && !isDueForReview) {
+			container?.remove();
+			return;
 		}
 
 		const hasCompletedActions = Boolean(container?.hasClass('mm-completed-card-actions-container'));
