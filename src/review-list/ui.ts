@@ -33,12 +33,32 @@ export default class ReviewListView extends ItemView {
 		const container = this.contentEl;
 		container.empty();
 
+		const reviewFlashcards = await getFlashcardsForReview(this.plugin);
+		const completedFlashcards = await getCompletedFlashcards(this.plugin);
+		const sortedFlashcards = this.activeTab === 'review'
+			? reviewFlashcards
+			: completedFlashcards;
+
 		const tabsContainer = container.createDiv({
 			cls: 'mm-tabs-container',
 			attr: { role: 'tablist' },
 		});
-		this.createTabButton(tabsContainer, 'review', this.plugin.i18n.t('reviewList.tabs.review'), 'clock');
-		this.createTabButton(tabsContainer, 'completed', this.plugin.i18n.t('reviewList.tabs.completed'), 'check-circle');
+		this.createTabButton(
+			tabsContainer,
+			'review',
+			this.plugin.i18n.t('reviewList.tabs.review'),
+			'clock',
+			reviewFlashcards.length,
+			this.plugin.i18n.t('reviewList.dueCount', { count: reviewFlashcards.length.toString() })
+		);
+		this.createTabButton(
+			tabsContainer,
+			'completed',
+			this.plugin.i18n.t('reviewList.tabs.completed'),
+			'check-circle',
+			completedFlashcards.length,
+			this.plugin.i18n.t('reviewList.completedCount', { count: completedFlashcards.length.toString() })
+		);
 		tabsContainer.addEventListener('mousemove', (e) => {
 			const rect = tabsContainer.getBoundingClientRect();
 			const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -203,10 +223,6 @@ export default class ReviewListView extends ItemView {
 			cls: 'mm-card-grid',
 		});
 
-		const sortedFlashcards = this.activeTab === 'review'
-			? await getFlashcardsForReview(this.plugin)
-			: await getCompletedFlashcards(this.plugin);
-
 		// If there are no cards in the selected tab, show a message
 		if (sortedFlashcards.length === 0) {
 			const noFlashcardsMessage = container.createDiv({ cls: 'mm-no-flashcards' });
@@ -334,7 +350,14 @@ export default class ReviewListView extends ItemView {
 		this.sortCards();
 	}
 
-	private createTabButton(container: HTMLElement, tab: ReviewListTab, text: string, icon: string): void {
+	private createTabButton(
+		container: HTMLElement,
+		tab: ReviewListTab,
+		text: string,
+		icon: string,
+		count?: number,
+		countLabel?: string
+	): void {
 		const tabButton = container.createEl('button', {
 			cls: `mm-tab-button ${this.activeTab === tab ? 'mm-tab-button-active' : ''}`,
 			attr: {
@@ -345,6 +368,17 @@ export default class ReviewListView extends ItemView {
 		const iconEl = tabButton.createSpan({ cls: 'mm-tab-icon' });
 		setIcon(iconEl, icon);
 		tabButton.createSpan({ cls: 'mm-tab-text', text });
+		if (count !== undefined) {
+			const label = countLabel ?? count.toString();
+			tabButton.createSpan({
+				cls: 'mm-tab-count',
+				text: count.toString(),
+				attr: {
+					'aria-label': label,
+					title: label,
+				},
+			});
+		}
 
 		tabButton.addEventListener('click', () => {
 			if (this.activeTab === tab) {

@@ -60,6 +60,8 @@
     "noFlashcards": "No flashcards due for review.",
     "noCompletedFlashcards": "No completed flashcards yet.",
     "noSearchResults": "No flashcards found matching your search.",
+    "dueCount": "Ready for review: {{count}}",
+    "completedCount": "Completed: {{count}}",
     "overdueByDays": "Overdue by {{days}} days",
     "dueToday": "Due today",
     "completed": "Completed",

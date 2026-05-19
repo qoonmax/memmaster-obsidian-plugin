@@ -100,9 +100,30 @@
     white-space: nowrap;
 }
 
+.mm-view .mm-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.35em;
+    height: 1.35em;
+    padding: 0 0.35em;
+    border-radius: 999px;
+    background-color: var(--background-modifier-border);
+    color: var(--text-muted);
+    font-size: 0.85em;
+    font-weight: 600;
+    line-height: 1;
+    box-sizing: border-box;
+}
+
 .mm-view .mm-tab-button-active,
 .mm-view .mm-tab-button-active:hover {
     background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.mm-view .mm-tab-button-active .mm-tab-count {
+    background-color: color-mix(in srgb, var(--text-on-accent) 20%, transparent);
     color: var(--text-on-accent);
 }
 

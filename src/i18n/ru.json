@@ -60,6 +60,8 @@
     "noFlashcards": "Нет карточек для повторения.",
     "noCompletedFlashcards": "Пока нет завершенных карточек.",
     "noSearchResults": "Карточки не найдены.",
+    "dueCount": "Готово к повторению: {{count}}",
+    "completedCount": "Завершено: {{count}}",
     "overdueByDays": "Просрочено на {{days}} дн.",
     "dueToday": "Сегодня",
     "completed": "Завершена",
