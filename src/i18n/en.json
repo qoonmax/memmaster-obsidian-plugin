@@ -17,12 +17,12 @@
     },
     "tagName": {
       "name": "Tag name",
-      "desc": "Enter the tag name to use",
+      "desc": "Choose the tag to use",
       "placeholder": "#flashcard"
     },
     "folderName": {
       "name": "Folder name",
-      "desc": "Enter the folder path to use",
+      "desc": "Choose the folder path to use",
       "placeholder": "Flashcards"
     },
     "reviewListHeading": "Review list settings",
