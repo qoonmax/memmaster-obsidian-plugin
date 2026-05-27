@@ -1,9 +1,9 @@
 {
 	"id": "memmaster",
-	"name": "MemMaster - Spaced Repetition",
+	"name": "MemMaster — Spaced Repetition",
 	"version": "1.0.3",
 	"minAppVersion": "1.7.2",
-	"description": "Turn Obsidian notes into flashcards and review them with spaced repetition, active recall, smart scheduling, and study reminders.",
+	"description": "Create flashcards from notes and study with spaced repetition, active recall, review scheduling, memory retention, and study reminders.",
 	"author": "qoonmax",
 	"authorUrl": "https://github.com/qoonmax",
 	"isDesktopOnly": false

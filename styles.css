@@ -2,8 +2,8 @@
  * COMMON UTILITY CLASSES
  * ======================================== */
 
-.mm-hidden {
-    display: none !important;
+.mm-hidden.mm-hidden {
+    display: none;
 }
 
 /* ========================================
@@ -48,11 +48,11 @@
         transparent 45%
     );
     -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box,
+        linear-gradient(#ffffff 0 0);
     mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box,
+        linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     opacity: 0;
@@ -64,12 +64,12 @@
     opacity: 1;
 }
 
-.mm-view .mm-tab-button {
+.mm-view .mm-tabs-container > button.mm-tab-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    height: 25px!important;
+    height: 25px;
     padding: 0.35rem 0.75rem;
     border: none;
     border-radius: 6px;
@@ -214,11 +214,11 @@
         transparent 50%
     );
     -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     padding: 1px;
@@ -294,11 +294,11 @@
         transparent 40%
     );
     -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     padding: 1px;
@@ -409,10 +409,10 @@
     background-color: var(--tab-container-background);
 }
 
-.mm-view .view-content {
-    background-image: radial-gradient(var(--nav-indentation-guide-color) .65px, var(--background-primary) .65px) !important;
+.workspace-leaf-content.mm-view .view-content {
+    background-image: radial-gradient(var(--nav-indentation-guide-color) .65px, var(--background-primary) .65px);
     background-size: 27px 27px;
-    background-color: var(--background-primary)!important;
+    background-color: var(--background-primary);
     container: mm-review-list / inline-size;
 }
 
@@ -464,9 +464,14 @@
 
 .mm-view .mm-no-search-results {
     padding: 0.5rem;
+    font-size: var(--font-text-size);
+    font-family: var(--font-text);
+    line-height: var(--line-height-normal);
 }
 
 .mm-view .mm-card {
+    --mm-open-card-button-display: none;
+
     cursor: pointer;
     position: relative;
     padding: 2rem;
@@ -494,11 +499,11 @@
         transparent 40%
     );
     -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     opacity: 0;
@@ -514,44 +519,44 @@
 /* BLUR STYLES */
 /* ---------------------------------------- */
 
-.mm-view .mm-blur-enabled .mm-card-header {
+.mm-view .mm-card.mm-blur-enabled .mm-card-header {
     filter: blur(2rem);
     mask:none;
 }
 
-.mm-blur-enabled:hover .mm-card-header {
+.mm-view .mm-card.mm-blur-enabled:hover .mm-card-header {
     filter: none;
 }
 
-.mm-view .mm-blur-enabled .mm-card-content {
+.mm-view .mm-card.mm-blur-enabled .mm-card-content {
     filter: blur(2rem);
     mask:none;
 }
 
-.mm-blur-enabled:hover .mm-card-content {
+.mm-view .mm-card.mm-blur-enabled:hover .mm-card-content {
     filter: none;
     mask: linear-gradient(black 40%, black 5%, transparent);
 }
 
-.mm-view .mm-blur-enabled .mm-open-card-button {
-    display: block!important;
+.mm-view .mm-card.mm-blur-enabled {
+    --mm-open-card-button-display: block;
 }
 
-.mm-view .mm-blur-enabled:hover .mm-open-card-button {
-    display: none!important;
+.mm-view .mm-card.mm-blur-enabled:hover {
+    --mm-open-card-button-display: none;
 }
 
-.mm-view .mm-blur-disabled .mm-card-header {
+.mm-view .mm-card.mm-blur-disabled .mm-card-header {
     filter: none;
 }
 
-.mm-view .mm-blur-disabled .mm-card-content {
+.mm-view .mm-card.mm-blur-disabled .mm-card-content {
     filter: none;
     mask: linear-gradient(black 40%, black 5%, transparent);
 }
 
-.mm-view .mm-blur-disabled .mm-open-card-button {
-    display: none!important;
+.mm-view .mm-card.mm-blur-disabled {
+    --mm-open-card-button-display: none;
 }
 
 /* ---------------------------------------- */
@@ -567,12 +572,11 @@
 .mm-view .mm-card-tags {
     display: flex;
     flex-wrap: wrap;
-    column-gap: 0.5rem;
     line-height: 1.7;
 }
 
 .mm-view .mm-card-tags p {
-    margin: 0;
+    margin: 0 0.5rem 0 0;
 
     color: var(--tag-color);
     font-size: var(--tag-size);
@@ -599,7 +603,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    display: none;
+    display: var(--mm-open-card-button-display);
     outline: none;
     user-select: none;
     cursor: var(--cursor);
@@ -610,12 +614,6 @@
     color: var(--text-color);
     opacity: 50%;
     width: 2rem;
-}
-
-.mm-view .mm-no-search-results {
-    font-size: var(--font-text-size);
-    font-family: var(--font-text);
-    line-height: var(--line-height-normal);
 }
 
 /**
@@ -648,7 +646,7 @@
     .mm-view .mm-search-input {
         width: 100%;
         box-sizing: border-box;
-        background-color: var(--background-primary)!important;
+        background-color: var(--background-primary);
     }
 
     .mm-view .mm-sort-wrapper {
@@ -691,7 +689,7 @@
     }
     
     .mm-view .mm-search-input {
-        background-color: var(--background-primary)!important;
+        background-color: var(--background-primary);
     }
 
     .mm-view .mm-sort-wrapper {
@@ -714,10 +712,10 @@
  * REVIEW FLASHCARD PAGE STYLES
  * ======================================== */
 
-.mm-estimation-card-buttons-container {
+.markdown-preview-section > .mm-estimation-card-buttons-container {
     position: relative;
     background: var(--tab-container-background);
-    padding: 2rem!important;
+    padding: 2rem;
     border-radius: var(--radius-l);
     margin-top: 2rem;
     border: var(--tab-outline-width) solid var(--tab-outline-color);
@@ -740,11 +738,11 @@
         transparent 40%
     );
     -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     opacity: 0;

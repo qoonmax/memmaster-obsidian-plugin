@@ -1,7 +1,7 @@
 {
 	"name": "memmaster",
 	"version": "1.0.3",
-	"description": "MemMaster is an Obsidian flashcards and spaced repetition plugin for active recall, review scheduling, memory retention, and study reminders.",
+	"description": "Create flashcards from notes and study with spaced repetition, active recall, review scheduling, memory retention, and study reminders.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
