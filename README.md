@@ -1,4 +1,4 @@
-# MemMaster — Spaced Repetition for Obsidian
+# MemMaster - Obsidian Flashcards and Spaced Repetition Plugin
 
 A simple yet powerful spaced repetition plugin that helps you memorize your Obsidian notes using flashcards, spaced repetition, active recall, and review scheduling.
 
@@ -18,6 +18,8 @@ A simple yet powerful spaced repetition plugin that helps you memorize your Obsi
 - **Keyboard shortcuts** — quick review without leaving the keyboard
 - **Responsive layout** — works better on smaller screens and mobile devices
 - **Multilingual** — multiple language support
+- **Anonymous cloud connection** — cloud features work without an account, email, or password
+
 ## How It Works
 
 1. Mark a note as a flashcard by command, tag, or folder.
@@ -42,6 +44,28 @@ Unlike the original SM-2 algorithm, it doesn't use an "ease factor" coefficient.
 2. Click **Browse** and search for **MemMaster**.
 3. Click **Install**, then **Enable**.
 4. Configure your preferred flashcard source, such as tag or folder, in plugin settings.
+
+## MemMaster Cloud
+
+MemMaster Cloud helps you create practice tests from your review cards and take them later. You can also enable browser push notifications to get reminders when cards are ready to review.
+
+To make this work without registration, MemMaster automatically creates a private recovery key for each vault. No account is required: you do not need to enter an email or create a password.
+
+The recovery key is issued by MemMaster Cloud and stored in the plugin settings through Obsidian plugin data. It is sent only in request bodies when checking a connection and is never added to URLs.
+
+To use the same cloud connection on another device:
+
+1. On the old Obsidian installation, open MemMaster settings and click **Copy recovery key**.
+2. On the new Obsidian installation, open MemMaster settings and click **Connect an existing key**.
+3. Paste the copied key.
+
+If a saved key is no longer available, the settings panel offers to create a new connection. Previous cloud data remains accessible only through its saved recovery key.
+
+## Privacy
+
+MemMaster can send note content to MemMaster Cloud when you ask it to generate practice tests from your review cards. If you enable browser push notifications, MemMaster Cloud can notify you when cards are ready for review. No account is required. A private recovery key identifies your cloud connection.
+
+When a cloud feature is used, MemMaster Cloud may receive the note path and note content needed to generate the requested result. The recovery key is stored in this vault's plugin settings. Creating a new connection creates a separate anonymous cloud context.
 
 ## Usage
 

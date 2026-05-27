@@ -1,9 +1,9 @@
 {
 	"id": "memmaster",
-	"name": "MemMaster — Spaced Repetition",
-	"version": "1.0.2",
+	"name": "MemMaster - Spaced Repetition",
+	"version": "1.0.3",
 	"minAppVersion": "1.7.2",
-	"description": "A spaced repetition plugin that helps you remember your notes by scheduling them for review at the right time.",
+	"description": "Turn Obsidian notes into flashcards and review them with spaced repetition, active recall, smart scheduling, and study reminders.",
 	"author": "qoonmax",
 	"authorUrl": "https://github.com/qoonmax",
 	"isDesktopOnly": false
