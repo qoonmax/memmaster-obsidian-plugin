@@ -1,9 +1,9 @@
 {
 	"id": "memmaster",
 	"name": "MemMaster — Spaced Repetition",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"minAppVersion": "1.7.2",
-	"description": "A spaced repetition plugin that helps you remember your notes by scheduling them for review at the right time.",
+	"description": "Create flashcards from notes and study with spaced repetition, active recall, review scheduling, memory retention, and study reminders.",
 	"author": "qoonmax",
 	"authorUrl": "https://github.com/qoonmax",
 	"isDesktopOnly": false

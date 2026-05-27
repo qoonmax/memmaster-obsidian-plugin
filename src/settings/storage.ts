@@ -6,6 +6,7 @@ interface MemMasterPluginSettings {
 	folderName: string;
 	isBlurFlashcardText: boolean;
 	openInPreviewMode: boolean;
+	userKey?: string;
 }
 
 const DEFAULT_SETTINGS: MemMasterPluginSettings = {
@@ -18,8 +19,12 @@ const DEFAULT_SETTINGS: MemMasterPluginSettings = {
 
 // Exported functions for managing settings
 async function loadSettings(plugin: Plugin): Promise<MemMasterPluginSettings> {
-	const data = await plugin.loadData() as Partial<MemMasterPluginSettings> | null;
-	return Object.assign({}, DEFAULT_SETTINGS, data ?? {});
+	const data = await plugin.loadData() as (Partial<MemMasterPluginSettings> & { accessToken?: string }) | null;
+	const settings = Object.assign({}, DEFAULT_SETTINGS, data ?? {});
+
+	delete settings.accessToken;
+
+	return settings;
 }
 
 async function saveSettings(plugin: Plugin, settings: MemMasterPluginSettings): Promise<void> {

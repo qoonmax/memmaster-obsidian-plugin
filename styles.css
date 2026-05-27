@@ -2,8 +2,8 @@
  * COMMON UTILITY CLASSES
  * ======================================== */
 
-.mm-hidden {
-    display: none !important;
+.mm-hidden.mm-hidden {
+    display: none;
 }
 
 /* ========================================
@@ -48,11 +48,11 @@
         transparent 45%
     );
     -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box,
+        linear-gradient(#ffffff 0 0);
     mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box,
+        linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     opacity: 0;
@@ -64,12 +64,12 @@
     opacity: 1;
 }
 
-.mm-view .mm-tab-button {
+.mm-view .mm-tabs-container > button.mm-tab-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    height: 25px!important;
+    height: 25px;
     padding: 0.35rem 0.75rem;
     border: none;
     border-radius: 6px;
@@ -100,9 +100,30 @@
     white-space: nowrap;
 }
 
+.mm-view .mm-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.35em;
+    height: 1.35em;
+    padding: 0 0.35em;
+    border-radius: 999px;
+    background-color: var(--background-modifier-border);
+    color: var(--text-muted);
+    font-size: 0.85em;
+    font-weight: 600;
+    line-height: 1;
+    box-sizing: border-box;
+}
+
 .mm-view .mm-tab-button-active,
 .mm-view .mm-tab-button-active:hover {
     background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.mm-view .mm-tab-button-active .mm-tab-count {
+    background-color: color-mix(in srgb, var(--text-on-accent) 20%, transparent);
     color: var(--text-on-accent);
 }
 
@@ -193,11 +214,11 @@
         transparent 50%
     );
     -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     padding: 1px;
@@ -273,11 +294,11 @@
         transparent 40%
     );
     -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     padding: 1px;
@@ -388,10 +409,10 @@
     background-color: var(--tab-container-background);
 }
 
-.mm-view .view-content {
-    background-image: radial-gradient(var(--nav-indentation-guide-color) .65px, var(--background-primary) .65px) !important;
+.workspace-leaf-content.mm-view .view-content {
+    background-image: radial-gradient(var(--nav-indentation-guide-color) .65px, var(--background-primary) .65px);
     background-size: 27px 27px;
-    background-color: var(--background-primary)!important;
+    background-color: var(--background-primary);
     container: mm-review-list / inline-size;
 }
 
@@ -443,9 +464,14 @@
 
 .mm-view .mm-no-search-results {
     padding: 0.5rem;
+    font-size: var(--font-text-size);
+    font-family: var(--font-text);
+    line-height: var(--line-height-normal);
 }
 
 .mm-view .mm-card {
+    --mm-open-card-button-display: none;
+
     cursor: pointer;
     position: relative;
     padding: 2rem;
@@ -473,11 +499,11 @@
         transparent 40%
     );
     -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     opacity: 0;
@@ -493,44 +519,44 @@
 /* BLUR STYLES */
 /* ---------------------------------------- */
 
-.mm-view .mm-blur-enabled .mm-card-header {
+.mm-view .mm-card.mm-blur-enabled .mm-card-header {
     filter: blur(2rem);
     mask:none;
 }
 
-.mm-blur-enabled:hover .mm-card-header {
+.mm-view .mm-card.mm-blur-enabled:hover .mm-card-header {
     filter: none;
 }
 
-.mm-view .mm-blur-enabled .mm-card-content {
+.mm-view .mm-card.mm-blur-enabled .mm-card-content {
     filter: blur(2rem);
     mask:none;
 }
 
-.mm-blur-enabled:hover .mm-card-content {
+.mm-view .mm-card.mm-blur-enabled:hover .mm-card-content {
     filter: none;
     mask: linear-gradient(black 40%, black 5%, transparent);
 }
 
-.mm-view .mm-blur-enabled .mm-open-card-button {
-    display: block!important;
+.mm-view .mm-card.mm-blur-enabled {
+    --mm-open-card-button-display: block;
 }
 
-.mm-view .mm-blur-enabled:hover .mm-open-card-button {
-    display: none!important;
+.mm-view .mm-card.mm-blur-enabled:hover {
+    --mm-open-card-button-display: none;
 }
 
-.mm-view .mm-blur-disabled .mm-card-header {
+.mm-view .mm-card.mm-blur-disabled .mm-card-header {
     filter: none;
 }
 
-.mm-view .mm-blur-disabled .mm-card-content {
+.mm-view .mm-card.mm-blur-disabled .mm-card-content {
     filter: none;
     mask: linear-gradient(black 40%, black 5%, transparent);
 }
 
-.mm-view .mm-blur-disabled .mm-open-card-button {
-    display: none!important;
+.mm-view .mm-card.mm-blur-disabled {
+    --mm-open-card-button-display: none;
 }
 
 /* ---------------------------------------- */
@@ -546,12 +572,11 @@
 .mm-view .mm-card-tags {
     display: flex;
     flex-wrap: wrap;
-    column-gap: 0.5rem;
     line-height: 1.7;
 }
 
 .mm-view .mm-card-tags p {
-    margin: 0;
+    margin: 0 0.5rem 0 0;
 
     color: var(--tag-color);
     font-size: var(--tag-size);
@@ -578,7 +603,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    display: none;
+    display: var(--mm-open-card-button-display);
     outline: none;
     user-select: none;
     cursor: var(--cursor);
@@ -589,12 +614,6 @@
     color: var(--text-color);
     opacity: 50%;
     width: 2rem;
-}
-
-.mm-view .mm-no-search-results {
-    font-size: var(--font-text-size);
-    font-family: var(--font-text);
-    line-height: var(--line-height-normal);
 }
 
 /**
@@ -627,7 +646,7 @@
     .mm-view .mm-search-input {
         width: 100%;
         box-sizing: border-box;
-        background-color: var(--background-primary)!important;
+        background-color: var(--background-primary);
     }
 
     .mm-view .mm-sort-wrapper {
@@ -670,7 +689,7 @@
     }
     
     .mm-view .mm-search-input {
-        background-color: var(--background-primary)!important;
+        background-color: var(--background-primary);
     }
 
     .mm-view .mm-sort-wrapper {
@@ -693,10 +712,10 @@
  * REVIEW FLASHCARD PAGE STYLES
  * ======================================== */
 
-.mm-estimation-card-buttons-container {
+.markdown-preview-section > .mm-estimation-card-buttons-container {
     position: relative;
     background: var(--tab-container-background);
-    padding: 2rem!important;
+    padding: 2rem;
     border-radius: var(--radius-l);
     margin-top: 2rem;
     border: var(--tab-outline-width) solid var(--tab-outline-color);
@@ -719,11 +738,11 @@
         transparent 40%
     );
     -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+        linear-gradient(#ffffff 0 0) content-box, 
+        linear-gradient(#ffffff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     opacity: 0;
@@ -827,6 +846,123 @@
 .mm-hard-button:hover {
     background-color: #F44336;
     color: white;
+}
+
+.mm-cloud-identity-callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 10px 0 18px;
+    padding: 12px 14px;
+    border: 1px solid var(--background-modifier-border);
+    border-left: 3px solid var(--interactive-accent);
+    border-radius: 6px;
+    background: var(--background-secondary);
+}
+
+.mm-cloud-identity-callout-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    color: var(--interactive-accent);
+}
+
+.mm-cloud-identity-callout-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.mm-cloud-identity-callout-text {
+    min-width: 0;
+    color: var(--text-normal);
+}
+
+.mm-cloud-identity-callout-text strong {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.mm-cloud-identity-callout-text p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.mm-cloud-identity-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px;
+    margin: -8px 0 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+}
+
+.mm-cloud-identity-status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    color: var(--text-muted);
+}
+
+.mm-cloud-identity-status-icon svg {
+    width: 17px;
+    height: 17px;
+}
+
+.mm-cloud-identity-status-text {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.mm-cloud-identity-status-text strong {
+    display: block;
+    margin-bottom: 3px;
+    font-weight: 600;
+}
+
+.mm-cloud-identity-status-text p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.mm-cloud-identity-status-actions {
+    align-self: center;
+    margin-left: auto;
+}
+
+.mm-cloud-identity-status-connected {
+    border-color: color-mix(in srgb, var(--color-green) 45%, var(--background-modifier-border));
+}
+
+.mm-cloud-identity-status-connected .mm-cloud-identity-status-icon {
+    color: var(--color-green);
+}
+
+.mm-cloud-identity-status-warning {
+    border-color: color-mix(in srgb, var(--color-yellow) 45%, var(--background-modifier-border));
+}
+
+.mm-cloud-identity-status-warning .mm-cloud-identity-status-icon {
+    color: var(--color-yellow);
+}
+
+.mm-cloud-identity-status-error {
+    border-color: color-mix(in srgb, var(--color-red) 45%, var(--background-modifier-border));
+}
+
+.mm-cloud-identity-status-error .mm-cloud-identity-status-icon {
+    color: var(--color-red);
 }
 
 @media (max-width: 700px) {
