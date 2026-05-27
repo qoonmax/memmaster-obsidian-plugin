@@ -1,4 +1,4 @@
-# MemMaster - Obsidian Flashcards and Spaced Repetition Plugin
+# MemMaster Flashcards
 
 A simple yet powerful spaced repetition plugin that helps you memorize your Obsidian notes using flashcards, spaced repetition, active recall, and review scheduling.
 

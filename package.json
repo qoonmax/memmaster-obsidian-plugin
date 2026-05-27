@@ -1,6 +1,6 @@
 {
 	"name": "memmaster",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "Create flashcards from notes and study with spaced repetition, active recall, review scheduling, memory retention, and study reminders.",
 	"main": "main.js",
 	"scripts": {
