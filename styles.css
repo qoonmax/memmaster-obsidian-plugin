@@ -854,121 +854,43 @@
     color: white;
 }
 
-.mm-cloud-identity-callout {
+.mm-settings-support-footer {
     display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin: 10px 0 18px;
-    padding: 12px 14px;
-    border: 1px solid var(--background-modifier-border);
-    border-left: 3px solid var(--interactive-accent);
-    border-radius: 6px;
-    background: var(--background-secondary);
-}
-
-.mm-cloud-identity-callout-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    width: 22px;
-    height: 22px;
-    color: var(--interactive-accent);
-}
-
-.mm-cloud-identity-callout-icon svg {
-    width: 18px;
-    height: 18px;
-}
-
-.mm-cloud-identity-callout-text {
-    min-width: 0;
-    color: var(--text-normal);
-}
-
-.mm-cloud-identity-callout-text strong {
-    display: block;
-    margin-bottom: 4px;
-    font-weight: 600;
-}
-
-.mm-cloud-identity-callout-text p {
-    margin: 0;
-    color: var(--text-muted);
-    line-height: 1.45;
-}
-
-.mm-cloud-identity-status {
-    display: flex;
-    flex-wrap: wrap;
     align-items: flex-start;
     gap: 10px;
-    margin: -8px 0 12px;
-    padding: 10px 12px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
-    background: var(--background-primary);
+    margin-top: 22px;
+    padding: 12px 0 4px;
+    border-top: 1px solid var(--background-modifier-border);
+    color: var(--text-muted);
 }
 
-.mm-cloud-identity-status-icon {
+.mm-settings-support-footer-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
     width: 20px;
     height: 20px;
-    color: var(--text-muted);
+    color: var(--text-faint);
 }
 
-.mm-cloud-identity-status-icon svg {
+.mm-settings-support-footer-icon svg {
     width: 17px;
     height: 17px;
 }
 
-.mm-cloud-identity-status-text {
-    flex: 1 1 220px;
+.mm-settings-support-footer-text {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.25rem;
     min-width: 0;
-}
-
-.mm-cloud-identity-status-text strong {
-    display: block;
-    margin-bottom: 3px;
-    font-weight: 600;
-}
-
-.mm-cloud-identity-status-text p {
-    margin: 0;
-    color: var(--text-muted);
     line-height: 1.45;
 }
 
-.mm-cloud-identity-status-actions {
-    align-self: center;
-    margin-left: auto;
-}
-
-.mm-cloud-identity-status-connected {
-    border-color: color-mix(in srgb, var(--color-green) 45%, var(--background-modifier-border));
-}
-
-.mm-cloud-identity-status-connected .mm-cloud-identity-status-icon {
-    color: var(--color-green);
-}
-
-.mm-cloud-identity-status-warning {
-    border-color: color-mix(in srgb, var(--color-yellow) 45%, var(--background-modifier-border));
-}
-
-.mm-cloud-identity-status-warning .mm-cloud-identity-status-icon {
-    color: var(--color-yellow);
-}
-
-.mm-cloud-identity-status-error {
-    border-color: color-mix(in srgb, var(--color-red) 45%, var(--background-modifier-border));
-}
-
-.mm-cloud-identity-status-error .mm-cloud-identity-status-icon {
-    color: var(--color-red);
+.mm-settings-support-footer-text strong {
+    flex-basis: 100%;
+    color: var(--text-normal);
+    font-weight: 600;
 }
 
 @media (max-width: 700px) {

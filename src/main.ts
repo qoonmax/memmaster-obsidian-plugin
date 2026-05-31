@@ -8,13 +8,10 @@ import { I18n } from './i18n/i18n';
 import { updateCardMetadata, makeFlashcard } from './core/scheduler';
 import { isFileCompleted, isFileFlashcard } from './core/finder';
 import { sleep } from './core/utils';
-import { isValidUserKey } from './cloud/identity';
-import { checkCloudUserStatus, CloudUserStatus, createCloudUser } from './cloud/client';
 
 export default class MemMasterPlugin extends Plugin {
 	settings: MemMasterPluginSettings;
 	private observer: MutationObserver;
-	private cloudConnectionCreation: Promise<boolean> | null = null;
 	public events: Events;
 	public i18n: I18n;
 
@@ -174,8 +171,6 @@ export default class MemMasterPlugin extends Plugin {
 		});
 
 		this.addSettingTab(new MemMasterPluginSettingTab(this.app, this));
-
-		void this.ensureCloudConnection();
 	}
 
 	onunload() {
@@ -197,64 +192,10 @@ export default class MemMasterPlugin extends Plugin {
 
 	async loadSettings() {
 		this.settings = await loadSettings(this);
-		void this.ensureCloudConnection();
 	}
 
 	async saveSettings() {
 		await saveSettings(this, this.settings);
-	}
-
-	async createCloudConnection(): Promise<boolean> {
-		if (this.cloudConnectionCreation) {
-			return this.cloudConnectionCreation;
-		}
-
-		const creation = this.performCreateCloudConnection();
-		this.cloudConnectionCreation = creation;
-
-		try {
-			return await creation;
-		} finally {
-			if (this.cloudConnectionCreation === creation) {
-				this.cloudConnectionCreation = null;
-			}
-		}
-	}
-
-	private async performCreateCloudConnection(): Promise<boolean> {
-		const response = await createCloudUser(this);
-
-		if (!response) {
-			return false;
-		}
-
-		const oldUserKey = this.settings.userKey;
-
-		try {
-			this.settings.userKey = response.userKey;
-			await this.saveSettings();
-			return true;
-		} catch {
-			this.settings.userKey = oldUserKey;
-			new Notice(this.i18n.t('notices.connectionCreationFailed'));
-			return false;
-		}
-	}
-
-	async checkCloudConnectionStatus(userKey = this.settings.userKey): Promise<CloudUserStatus> {
-		if (!userKey || !isValidUserKey(userKey)) {
-			return { state: 'bad_request' };
-		}
-
-		return checkCloudUserStatus(userKey);
-	}
-
-	async ensureCloudConnection(): Promise<boolean> {
-		if (this.settings.userKey) {
-			return true;
-		}
-
-		return this.createCloudConnection();
 	}
 
 	private async markCardWithDifficulty(file: TFile, difficulty: 'easy' | 'medium' | 'hard') {
