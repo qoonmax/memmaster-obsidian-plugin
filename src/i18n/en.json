@@ -113,6 +113,7 @@
     "noCompletedFlashcards": "No completed flashcards yet.",
     "noSearchResults": "No flashcards found matching your search.",
     "dueCount": "Ready for review: {{count}}",
+    "testsDueCount": "Tests due: {{count}}",
     "completedCount": "Completed: {{count}}",
     "overdueByDays": "Overdue by {{days}} days",
     "dueToday": "Due today",

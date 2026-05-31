@@ -37,14 +37,22 @@ export default class ReviewListView extends ItemView {
 		const container = this.contentEl;
 		container.empty();
 
-		this.renderModeSwitch(container);
+		const testsEnabled = this.plugin.settings.testsEnabled;
+		const [reviewFlashcards, tests] = await Promise.all([
+			getFlashcardsForReview(this.plugin),
+			testsEnabled ? getTestsForReview(this.plugin) : Promise.resolve([]),
+		]);
+
+		this.renderModeSwitch(container, {
+			cards: reviewFlashcards.length,
+			tests: tests.length,
+		});
 
 		if (this.activeMode === 'tests') {
-			await this.renderTestsContent(container);
+			this.renderTestsContent(container, tests);
 			return;
 		}
 
-		const reviewFlashcards = await getFlashcardsForReview(this.plugin);
 		const completedFlashcards = await getCompletedFlashcards(this.plugin);
 		const sortedFlashcards = this.activeTab === 'review'
 			? reviewFlashcards
@@ -361,7 +369,7 @@ export default class ReviewListView extends ItemView {
 		this.sortCards();
 	}
 
-	private renderModeSwitch(container: HTMLElement): void {
+	private renderModeSwitch(container: HTMLElement, counts: Record<ReviewMode, number>): void {
 		if (!this.plugin.settings.testsEnabled) {
 			this.activeMode = 'cards';
 			return;
@@ -376,13 +384,17 @@ export default class ReviewListView extends ItemView {
 			modeContainer,
 			'cards',
 			this.plugin.i18n.t('reviewList.modes.cards'),
-			'square-library'
+			'square-library',
+			counts.cards,
+			this.plugin.i18n.t('reviewList.dueCount', { count: counts.cards.toString() })
 		);
 		this.createModeButton(
 			modeContainer,
 			'tests',
 			this.plugin.i18n.t('reviewList.modes.tests'),
-			'list-checks'
+			'list-checks',
+			counts.tests,
+			this.plugin.i18n.t('reviewList.testsDueCount', { count: counts.tests.toString() })
 		);
 	}
 
@@ -390,7 +402,9 @@ export default class ReviewListView extends ItemView {
 		container: HTMLElement,
 		mode: ReviewMode,
 		text: string,
-		icon: string
+		icon: string,
+		count?: number,
+		countLabel?: string
 	): void {
 		const modeButton = container.createEl('button', {
 			cls: `mm-mode-button ${this.activeMode === mode ? 'mm-mode-button-active' : ''}`,
@@ -402,6 +416,17 @@ export default class ReviewListView extends ItemView {
 		const iconEl = modeButton.createSpan({ cls: 'mm-tab-icon' });
 		setIcon(iconEl, icon);
 		modeButton.createSpan({ cls: 'mm-tab-text', text });
+		if (count !== undefined) {
+			const label = countLabel ?? count.toString();
+			modeButton.createSpan({
+				cls: 'mm-tab-count',
+				text: count.toString(),
+				attr: {
+					'aria-label': label,
+					title: label,
+				},
+			});
+		}
 
 		modeButton.addEventListener('click', () => {
 			if (this.activeMode === mode) {
@@ -413,13 +438,12 @@ export default class ReviewListView extends ItemView {
 		});
 	}
 
-	private async renderTestsContent(container: HTMLElement): Promise<void> {
+	private renderTestsContent(container: HTMLElement, tests: TestMetadata[]): void {
 		if (!this.plugin.settings.testsEnabled) {
 			container.createDiv({ cls: 'mm-no-flashcards', text: this.plugin.i18n.t('reviewList.testsDisabled') });
 			return;
 		}
 
-		const tests = await getTestsForReview(this.plugin);
 		if (tests.length === 0) {
 			container.createDiv({ cls: 'mm-no-flashcards', text: this.plugin.i18n.t('reviewList.noTests') });
 			return;

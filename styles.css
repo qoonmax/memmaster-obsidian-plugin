@@ -170,7 +170,9 @@
 }
 
 .mm-view .mm-tabs-container > button.mm-tab-button.mm-tab-button-active .mm-tab-count,
-.mm-view .mm-tabs-container > button.mm-tab-button[aria-selected="true"] .mm-tab-count {
+.mm-view .mm-tabs-container > button.mm-tab-button[aria-selected="true"] .mm-tab-count,
+.mm-view .mm-mode-switch-container > button.mm-mode-button.mm-mode-button-active .mm-tab-count,
+.mm-view .mm-mode-switch-container > button.mm-mode-button[aria-selected="true"] .mm-tab-count {
     background-color: color-mix(in srgb, var(--text-on-accent) 20%, transparent);
     color: var(--text-on-accent);
 }

@@ -113,6 +113,7 @@
     "noCompletedFlashcards": "Пока нет завершенных карточек.",
     "noSearchResults": "Карточки не найдены.",
     "dueCount": "Готово к повторению: {{count}}",
+    "testsDueCount": "Тестов к прохождению: {{count}}",
     "completedCount": "Завершено: {{count}}",
     "overdueByDays": "Просрочено на {{days}} дн.",
     "dueToday": "Сегодня",
