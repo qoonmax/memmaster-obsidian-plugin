@@ -10,6 +10,8 @@ interface ParsedContent {
 }
 
 const MAX_REVIEW_STAGE = 10;
+type ReviewItemType = 'card' | 'test';
+type ReviewDifficulty = 'easy' | 'medium' | 'hard' | 'again';
 
 // New function to extract and parse frontmatter
 function parseFrontmatter(content: string): ParsedContent {
@@ -60,14 +62,14 @@ function clearMemMasterMetadata(metadata: Record<string, string>): void {
     delete metadata["memmaster-completed-at"];
 }
 
-export async function updateCardMetadata(plugin: MemMasterPlugin, file: TFile, difficulty: string) {
+async function updateReviewMetadata(plugin: MemMasterPlugin, file: TFile, difficulty: ReviewDifficulty, itemType: ReviewItemType) {
     const content = await plugin.app.vault.read(file);
 
     // Extract YAML frontmatter
     const { metadata, body } = parseFrontmatter(content);
 
     if (metadata["memmaster-completed"]?.toLowerCase() === "true" || metadata["memmaster-completed-at"]) {
-        new Notice(plugin.i18n.t('notices.cardAlreadyMastered'));
+        new Notice(plugin.i18n.t(itemType === 'test' ? 'notices.testAlreadyMastered' : 'notices.cardAlreadyMastered'));
         return;
     }
 
@@ -79,7 +81,10 @@ export async function updateCardMetadata(plugin: MemMasterPlugin, file: TFile, d
         stage = 0;
     }
 
-    if (difficulty === "easy") {
+    // A wrong test answer should stay due without advancing the review stage.
+    if (difficulty === "again") {
+        nextInterval = 0;
+    } else if (difficulty === "easy") {
         nextInterval = Math.pow(2, stage);
         stage++;
     } else if (difficulty === "medium") {
@@ -102,10 +107,10 @@ export async function updateCardMetadata(plugin: MemMasterPlugin, file: TFile, d
         metadata["memmaster-completed-at"] = now.toISOString().split("T")[0];
 
         await plugin.app.vault.modify(file, buildContentWithFrontmatter(metadata, body));
-        new Notice(plugin.i18n.t('notices.cardMastered'));
+        new Notice(plugin.i18n.t(itemType === 'test' ? 'notices.testMastered' : 'notices.cardMastered'));
 
         // Refresh review list view
-        plugin.events.trigger(PLUGIN_EVENTS.CARD_UPDATED);
+        plugin.events.trigger(itemType === 'test' ? PLUGIN_EVENTS.TEST_UPDATED : PLUGIN_EVENTS.CARD_UPDATED);
         return;
     }
 
@@ -118,10 +123,21 @@ export async function updateCardMetadata(plugin: MemMasterPlugin, file: TFile, d
 
     // Write back to file
     await plugin.app.vault.modify(file, buildContentWithFrontmatter(metadata, body));
-    new Notice(plugin.i18n.t('notices.cardUpdated', { date: metadata["memmaster-next-review"] }));
+    new Notice(plugin.i18n.t(
+        itemType === 'test' ? 'notices.testUpdated' : 'notices.cardUpdated',
+        { date: metadata["memmaster-next-review"] }
+    ));
 
     // Refresh review list view
-    plugin.events.trigger(PLUGIN_EVENTS.CARD_UPDATED);
+    plugin.events.trigger(itemType === 'test' ? PLUGIN_EVENTS.TEST_UPDATED : PLUGIN_EVENTS.CARD_UPDATED);
+}
+
+export async function updateCardMetadata(plugin: MemMasterPlugin, file: TFile, difficulty: Exclude<ReviewDifficulty, 'again'>) {
+    await updateReviewMetadata(plugin, file, difficulty, 'card');
+}
+
+export async function updateTestMetadata(plugin: MemMasterPlugin, file: TFile, difficulty: Extract<ReviewDifficulty, 'easy' | 'again'>) {
+    await updateReviewMetadata(plugin, file, difficulty, 'test');
 }
 
 export async function resetCardReview(plugin: MemMasterPlugin, file: TFile): Promise<boolean> {

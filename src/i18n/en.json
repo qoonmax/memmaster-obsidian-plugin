@@ -34,6 +34,45 @@
       "name": "Open cards in reading mode",
       "desc": "Open flashcards from review list in reading mode (preview). Important: enabling this setting is required for review buttons to appear on cards."
     },
+    "testsHeading": "Test settings",
+    "testsEnabled": {
+      "name": "Enable tests",
+      "desc": "Show test generation and the test review mode"
+    },
+    "testsFolderName": {
+      "name": "Tests folder",
+      "desc": "Folder where MemMaster will save generated tests",
+      "placeholder": "memmaster_tests"
+    },
+    "aiProvider": {
+      "name": "Generation provider",
+      "desc": "Choose which provider API key should be used",
+      "openai": "OpenAI",
+      "deepseek": "DeepSeek"
+    },
+    "openaiApiKey": {
+      "name": "OpenAI API key",
+      "desc": "Used locally only when requesting test generation",
+      "placeholder": "sk-..."
+    },
+    "openaiModel": {
+      "name": "OpenAI model",
+      "desc": "OpenAI model used for test generation"
+    },
+    "deepseekApiKey": {
+      "name": "DeepSeek API key",
+      "desc": "Used locally only when requesting test generation",
+      "placeholder": "sk-..."
+    },
+    "deepseekModel": {
+      "name": "DeepSeek model",
+      "desc": "DeepSeek model used for test generation"
+    },
+    "testClientPrompt": {
+      "name": "Client prompt",
+      "desc": "Additional editable rules mixed into each test generation request",
+      "placeholder": "Generation rules..."
+    },
     "hotkeysHeading": "Hotkeys settings",
     "hotkeysDesc": "Configure keyboard shortcuts for quick card review. Set hotkeys in Settings > Hotkeys > MemMaster.",
     "support": {
@@ -52,6 +91,10 @@
     "easy": "Easy",
     "medium": "Medium",
     "hard": "Hard",
+    "generateTest": "Generate test",
+    "generateTestExistingStatus": "existing tests: {{count}}",
+    "generateTestNoTestsStatus": "no tests yet",
+    "generatingTest": "Generating...",
     "completedReviewAction": "This card is completed. Clear metadata to review it again.",
     "reviewAgain": "Review again"
   },
@@ -60,6 +103,10 @@
     "tabs": {
       "review": "For review",
       "completed": "Completed"
+    },
+    "modes": {
+      "cards": "Cards",
+      "tests": "Tests"
     },
     "searchPlaceholder": "Search flashcards...",
     "noFlashcards": "No flashcards due for review.",
@@ -75,7 +122,15 @@
     "sortOldestFirst": "Most overdue first",
     "sortNewestFirst": "Least overdue first",
     "sortCompletedNewestFirst": "Recently completed first",
-    "sortCompletedOldestFirst": "Oldest completed first"
+    "sortCompletedOldestFirst": "Oldest completed first",
+    "testsDisabled": "Tests are disabled in settings.",
+    "noTests": "No tests due for review.",
+    "testSource": "Source: {{name}}",
+    "testAnsweredCorrect": "Correct",
+    "testAnsweredWrong": "Incorrect",
+    "showNextTest": "Next test",
+    "chooseAnswer": "Choose an answer",
+    "testExplanation": "Explanation"
   },
   "notices": {
     "notAFlashcard": "This document is not a flashcard",
@@ -87,6 +142,14 @@
     "cardMastered": "Card mastered! Added to completed.",
     "cardAlreadyMastered": "This card is already completed.",
     "cardReset": "Metadata cleared. This card can be reviewed again.",
-    "cardUpdated": "Updated card: next review on {{date}}"
+    "cardUpdated": "Updated card: next review on {{date}}",
+    "testsDisabled": "Tests are disabled in settings",
+    "missingApiKey": "Add an API key for the selected provider in settings",
+    "testGenerationStarted": "Generating tests...",
+    "testGenerationFailed": "Could not generate tests: {{message}}",
+    "testsGenerated": "Generated tests: {{count}}",
+    "testUpdated": "Updated test: next review on {{date}}",
+    "testMastered": "Test mastered! Added to completed.",
+    "testAlreadyMastered": "This test is already completed."
   }
 }

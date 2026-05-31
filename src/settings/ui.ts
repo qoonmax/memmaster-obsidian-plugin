@@ -1,6 +1,7 @@
 import {App, getAllTags, PluginSettingTab, Setting, setIcon, TFolder} from 'obsidian';
 import MemMasterPlugin from '../main';
 import { PLUGIN_EVENTS } from '../core/events';
+import { DEEPSEEK_MODEL_OPTIONS, DEFAULT_SETTINGS, OPENAI_MODEL_OPTIONS } from './storage';
 
 const GITHUB_ISSUES_URL = 'https://github.com/qoonmax/memmaster-obsidian-plugin/issues';
 
@@ -38,9 +39,9 @@ export default class MemMasterPluginSettingTab extends PluginSettingTab {
 		return Array.from(tags).sort((a, b) => a.localeCompare(b));
 	}
 
-	private getFolderOptions(): string[] {
+	private getFolderOptions(currentFolderName = this.plugin.settings.folderName): string[] {
 		const folders = new Set<string>();
-		const currentFolder = this.normalizeFolderPath(this.plugin.settings.folderName);
+		const currentFolder = this.normalizeFolderPath(currentFolderName);
 
 		if (currentFolder) {
 			folders.add(currentFolder);
@@ -191,6 +192,145 @@ export default class MemMasterPluginSettingTab extends PluginSettingTab {
 						this.plugin.events.trigger(PLUGIN_EVENTS.SETTINGS_UPDATED);
 					})
 			);
+
+		new Setting(containerEl)
+			.setName(i18n.t('settings.testsHeading'))
+			.setHeading();
+
+		new Setting(containerEl)
+			.setName(i18n.t('settings.testsEnabled.name'))
+			.setDesc(i18n.t('settings.testsEnabled.desc'))
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.testsEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.testsEnabled = value;
+						await this.plugin.saveSettings();
+						this.display();
+
+						this.plugin.events.trigger(PLUGIN_EVENTS.SETTINGS_UPDATED);
+					})
+			);
+
+		if (this.plugin.settings.testsEnabled) {
+			const currentTestsFolder = this.normalizeFolderPath(this.plugin.settings.testsFolderName)
+				|| DEFAULT_SETTINGS.testsFolderName;
+			const testsFolderOptions = this.getFolderOptions(currentTestsFolder);
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.testsFolderName.name'))
+				.setDesc(i18n.t('settings.testsFolderName.desc'))
+				.addDropdown((dropdown) => {
+					testsFolderOptions.forEach((folderPath) => {
+						dropdown.addOption(folderPath, folderPath);
+					});
+
+					return dropdown
+						.setValue(currentTestsFolder)
+						.onChange(async (value) => {
+							this.plugin.settings.testsFolderName = value;
+							await this.plugin.saveSettings();
+
+							this.plugin.events.trigger(PLUGIN_EVENTS.SETTINGS_UPDATED);
+						});
+				});
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.aiProvider.name'))
+				.setDesc(i18n.t('settings.aiProvider.desc'))
+				.addDropdown((dropdown) =>
+					dropdown
+						.addOption('openai', i18n.t('settings.aiProvider.openai'))
+						.addOption('deepseek', i18n.t('settings.aiProvider.deepseek'))
+						.setValue(this.plugin.settings.aiProvider)
+						.onChange(async (value: 'openai' | 'deepseek') => {
+							this.plugin.settings.aiProvider = value;
+							await this.plugin.saveSettings();
+
+							this.plugin.events.trigger(PLUGIN_EVENTS.SETTINGS_UPDATED);
+						})
+				);
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.openaiApiKey.name'))
+				.setDesc(i18n.t('settings.openaiApiKey.desc'))
+				.addText((text) =>
+					text
+						.setPlaceholder(i18n.t('settings.openaiApiKey.placeholder'))
+						.setValue(this.plugin.settings.openaiApiKey)
+						.onChange(async (value) => {
+							this.plugin.settings.openaiApiKey = value.trim();
+							await this.plugin.saveSettings();
+						})
+				);
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.openaiModel.name'))
+				.setDesc(i18n.t('settings.openaiModel.desc'))
+				.addDropdown((dropdown) => {
+					const options = new Set([this.plugin.settings.openaiModel, ...OPENAI_MODEL_OPTIONS]);
+					options.forEach((model) => {
+						dropdown.addOption(model, model);
+					});
+
+					return dropdown
+						.setValue(this.plugin.settings.openaiModel)
+						.onChange(async (value) => {
+							this.plugin.settings.openaiModel = value;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.deepseekApiKey.name'))
+				.setDesc(i18n.t('settings.deepseekApiKey.desc'))
+				.addText((text) =>
+					text
+						.setPlaceholder(i18n.t('settings.deepseekApiKey.placeholder'))
+						.setValue(this.plugin.settings.deepseekApiKey)
+						.onChange(async (value) => {
+							this.plugin.settings.deepseekApiKey = value.trim();
+							await this.plugin.saveSettings();
+						})
+				);
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.deepseekModel.name'))
+				.setDesc(i18n.t('settings.deepseekModel.desc'))
+				.addDropdown((dropdown) => {
+					const options = new Set([this.plugin.settings.deepseekModel, ...DEEPSEEK_MODEL_OPTIONS]);
+					options.forEach((model) => {
+						dropdown.addOption(model, model);
+					});
+
+					return dropdown
+						.setValue(this.plugin.settings.deepseekModel)
+						.onChange(async (value) => {
+							this.plugin.settings.deepseekModel = value;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			const clientPromptSetting = new Setting(containerEl)
+				.setName(i18n.t('settings.testClientPrompt.name'))
+				.setDesc(i18n.t('settings.testClientPrompt.desc'));
+
+			clientPromptSetting.settingEl.addClass('mm-test-client-prompt-setting');
+
+			clientPromptSetting
+				.addTextArea((text) => {
+					text.inputEl.rows = 5;
+					text.inputEl.addClass('mm-test-client-prompt-textarea');
+
+					return text
+						.setPlaceholder(i18n.t('settings.testClientPrompt.placeholder'))
+						.setValue(this.plugin.settings.testClientPrompt)
+						.onChange(async (value) => {
+							this.plugin.settings.testClientPrompt = value;
+							await this.plugin.saveSettings();
+						});
+				});
+		}
 
 		// Add heading for hotkeys settings
 		new Setting(containerEl)

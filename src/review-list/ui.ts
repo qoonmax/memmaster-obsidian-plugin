@@ -2,7 +2,10 @@ import {ItemView, WorkspaceLeaf, MarkdownView, setIcon} from 'obsidian';
 import MemMasterPlugin from '../main';
 import { getCompletedFlashcards, getFlashcardsForReview } from '../core/finder';
 import { PLUGIN_EVENTS } from '../core/events';
+import { getTestsForReview, TestMetadata } from '../core/tests';
+import { updateTestMetadata } from '../core/scheduler';
 
+type ReviewMode = 'cards' | 'tests';
 type ReviewListTab = 'review' | 'completed';
 type SortOrder = 'oldest-first' | 'newest-first';
 
@@ -12,6 +15,7 @@ export default class ReviewListView extends ItemView {
 	private searchQuery = ''; // Add search state
 	private sortOrder: SortOrder = 'oldest-first'; // Add sort order state
 	private activeTab: ReviewListTab = 'review';
+	private activeMode: ReviewMode = 'cards';
 	private documentClickHandler: (() => void) | null = null; // Handler reference for cleanup
 	private documentClickHandlerDocument: Document | null = null;
 
@@ -32,6 +36,13 @@ export default class ReviewListView extends ItemView {
 	async renderContent(): Promise<void> {
 		const container = this.contentEl;
 		container.empty();
+
+		this.renderModeSwitch(container);
+
+		if (this.activeMode === 'tests') {
+			await this.renderTestsContent(container);
+			return;
+		}
 
 		const reviewFlashcards = await getFlashcardsForReview(this.plugin);
 		const completedFlashcards = await getCompletedFlashcards(this.plugin);
@@ -348,6 +359,164 @@ export default class ReviewListView extends ItemView {
 
 		// Apply initial sort based on current sort order
 		this.sortCards();
+	}
+
+	private renderModeSwitch(container: HTMLElement): void {
+		if (!this.plugin.settings.testsEnabled) {
+			this.activeMode = 'cards';
+			return;
+		}
+
+		const modeContainer = container.createDiv({
+			cls: 'mm-mode-switch-container',
+			attr: { role: 'tablist' },
+		});
+
+		this.createModeButton(
+			modeContainer,
+			'cards',
+			this.plugin.i18n.t('reviewList.modes.cards'),
+			'square-library'
+		);
+		this.createModeButton(
+			modeContainer,
+			'tests',
+			this.plugin.i18n.t('reviewList.modes.tests'),
+			'list-checks'
+		);
+	}
+
+	private createModeButton(
+		container: HTMLElement,
+		mode: ReviewMode,
+		text: string,
+		icon: string
+	): void {
+		const modeButton = container.createEl('button', {
+			cls: `mm-mode-button ${this.activeMode === mode ? 'mm-mode-button-active' : ''}`,
+			attr: {
+				role: 'tab',
+				'aria-selected': this.activeMode === mode ? 'true' : 'false',
+			},
+		});
+		const iconEl = modeButton.createSpan({ cls: 'mm-tab-icon' });
+		setIcon(iconEl, icon);
+		modeButton.createSpan({ cls: 'mm-tab-text', text });
+
+		modeButton.addEventListener('click', () => {
+			if (this.activeMode === mode) {
+				return;
+			}
+
+			this.activeMode = mode;
+			void this.renderContent();
+		});
+	}
+
+	private async renderTestsContent(container: HTMLElement): Promise<void> {
+		if (!this.plugin.settings.testsEnabled) {
+			container.createDiv({ cls: 'mm-no-flashcards', text: this.plugin.i18n.t('reviewList.testsDisabled') });
+			return;
+		}
+
+		const tests = await getTestsForReview(this.plugin);
+		if (tests.length === 0) {
+			container.createDiv({ cls: 'mm-no-flashcards', text: this.plugin.i18n.t('reviewList.noTests') });
+			return;
+		}
+
+		this.renderTestCard(container, tests[0]);
+	}
+
+	private renderTestCard(container: HTMLElement, metadata: TestMetadata): void {
+		const testShell = container.createDiv({ cls: 'mm-test-review-shell' });
+		const testCard = testShell.createDiv({ cls: 'mm-test-card' });
+		const testHeader = testCard.createDiv({ cls: 'mm-test-header' });
+		testHeader.createEl('h3', { text: metadata.test.question });
+
+		if (metadata.sourcePath) {
+			const sourceLink = testHeader.createEl('a', {
+				cls: 'mm-test-source',
+				text: this.plugin.i18n.t('reviewList.testSource', { name: this.getFileNameFromPath(metadata.sourcePath) }),
+				attr: {
+					href: metadata.sourcePath,
+					'data-href': metadata.sourcePath,
+					title: metadata.sourcePath,
+				},
+			});
+			sourceLink.addEventListener('click', (event) => {
+				event.preventDefault();
+				void this.openCardFile(metadata.sourcePath);
+			});
+		}
+
+		const optionsContainer = testCard.createDiv({ cls: 'mm-test-options' });
+		const feedback = testCard.createDiv({ cls: 'mm-test-feedback mm-hidden' });
+		const feedbackTitle = feedback.createEl('strong');
+		const feedbackExplanation = feedback.createEl('p');
+		const nextButton = testCard.createEl('button', {
+			cls: 'mm-test-next-button mm-hidden',
+			text: this.plugin.i18n.t('reviewList.showNextTest'),
+		});
+		nextButton.addEventListener('click', () => {
+			void this.renderContent();
+		});
+
+		metadata.test.options.forEach((option) => {
+			const optionButton = optionsContainer.createEl('button', {
+				cls: 'mm-test-option-button',
+				attr: {
+					type: 'button',
+				},
+			});
+			optionButton.createSpan({ cls: 'mm-test-option-id', text: option.id });
+			optionButton.createSpan({ cls: 'mm-test-option-text', text: option.text });
+
+			optionButton.addEventListener('click', () => {
+				const selectedId = option.id;
+				const isCorrect = selectedId === metadata.test.correctOptionId;
+
+				optionsContainer.querySelectorAll<HTMLButtonElement>('.mm-test-option-button').forEach((button) => {
+					button.disabled = true;
+					const buttonId = button.querySelector('.mm-test-option-id')?.textContent ?? '';
+
+					if (buttonId === metadata.test.correctOptionId) {
+						button.addClass('mm-test-option-correct');
+					} else if (buttonId === selectedId) {
+						button.addClass('mm-test-option-wrong');
+					}
+				});
+
+				feedback.removeClass('mm-hidden');
+				feedback.addClass(isCorrect ? 'mm-test-feedback-correct' : 'mm-test-feedback-wrong');
+				feedbackTitle.setText(
+					isCorrect
+						? this.plugin.i18n.t('reviewList.testAnsweredCorrect')
+						: this.plugin.i18n.t('reviewList.testAnsweredWrong')
+				);
+				feedbackExplanation.setText(
+					metadata.test.explanation
+						? `${this.plugin.i18n.t('reviewList.testExplanation')}: ${metadata.test.explanation}`
+						: this.plugin.i18n.t('reviewList.chooseAnswer')
+				);
+				nextButton.removeClass('mm-hidden');
+
+				void updateTestMetadata(this.plugin, metadata.file, isCorrect ? 'easy' : 'again');
+				});
+			});
+
+		testCard.addEventListener('mousemove', (e) => {
+			const rect = testCard.getBoundingClientRect();
+			const x = ((e.clientX - rect.left) / rect.width) * 100;
+			const y = ((e.clientY - rect.top) / rect.height) * 100;
+			testCard.style.setProperty('--mouse-x', `${x}%`);
+			testCard.style.setProperty('--mouse-y', `${y}%`);
+		});
+	}
+
+	private getFileNameFromPath(path: string): string {
+		const normalizedPath = path.replace(/\\/g, '/');
+		return normalizedPath.split('/').pop()?.replace(/\.md$/i, '') ?? path;
 	}
 
 	private createTabButton(

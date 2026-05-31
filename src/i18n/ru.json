@@ -34,6 +34,45 @@
       "name": "Открывать карточки в режиме чтения",
       "desc": "Открывать карточки из списка повторений в режиме чтения. Важно: включение этой настройки необходимо для появления кнопок повторения на карточках."
     },
+    "testsHeading": "Настройки тестов",
+    "testsEnabled": {
+      "name": "Включить тесты",
+      "desc": "Показывать генерацию и режим прохождения тестов"
+    },
+    "testsFolderName": {
+      "name": "Папка для тестов",
+      "desc": "Папка, в которую MemMaster будет сохранять сгенерированные тесты",
+      "placeholder": "memmaster_tests"
+    },
+    "aiProvider": {
+      "name": "Нейросеть для генерации",
+      "desc": "Выберите провайдера, чей API-ключ будет использоваться",
+      "openai": "OpenAI",
+      "deepseek": "DeepSeek"
+    },
+    "openaiApiKey": {
+      "name": "OpenAI API key",
+      "desc": "Ключ используется только локально для запроса генерации тестов",
+      "placeholder": "sk-..."
+    },
+    "openaiModel": {
+      "name": "Модель OpenAI",
+      "desc": "Модель OpenAI для генерации тестов"
+    },
+    "deepseekApiKey": {
+      "name": "DeepSeek API key",
+      "desc": "Ключ используется только локально для запроса генерации тестов",
+      "placeholder": "sk-..."
+    },
+    "deepseekModel": {
+      "name": "Модель DeepSeek",
+      "desc": "Модель DeepSeek для генерации тестов"
+    },
+    "testClientPrompt": {
+      "name": "Клиентский промпт",
+      "desc": "Дополнительные редактируемые правила, которые подмешиваются в каждый запрос генерации тестов",
+      "placeholder": "Правила генерации..."
+    },
     "hotkeysHeading": "Настройки горячих клавиш",
     "hotkeysDesc": "Настройте сочетания клавиш для быстрого повторения карточек. Назначьте горячие клавиши в Настройки > Горячие клавиши > MemMaster.",
     "support": {
@@ -52,6 +91,10 @@
     "easy": "Легко",
     "medium": "Средне",
     "hard": "Сложно",
+    "generateTest": "Сгенерировать тест",
+    "generateTestExistingStatus": "имеющихся тестов: {{count}}",
+    "generateTestNoTestsStatus": "тестов пока нет",
+    "generatingTest": "Генерация...",
     "completedReviewAction": "Карточка завершена. Очистите метаданные, чтобы повторять ее заново.",
     "reviewAgain": "Повторять заново"
   },
@@ -60,6 +103,10 @@
     "tabs": {
       "review": "К повторению",
       "completed": "Завершенные"
+    },
+    "modes": {
+      "cards": "Карточки",
+      "tests": "Тесты"
     },
     "searchPlaceholder": "Поиск карточек...",
     "noFlashcards": "Нет карточек для повторения.",
@@ -75,7 +122,15 @@
     "sortOldestFirst": "Сначала самые просроченные",
     "sortNewestFirst": "Сначала наименее просроченные",
     "sortCompletedNewestFirst": "Сначала недавно завершенные",
-    "sortCompletedOldestFirst": "Сначала давно завершенные"
+    "sortCompletedOldestFirst": "Сначала давно завершенные",
+    "testsDisabled": "Тесты выключены в настройках.",
+    "noTests": "Нет тестов для прохождения.",
+    "testSource": "Источник: {{name}}",
+    "testAnsweredCorrect": "Верно",
+    "testAnsweredWrong": "Неверно",
+    "showNextTest": "Следующий тест",
+    "chooseAnswer": "Выберите ответ",
+    "testExplanation": "Пояснение"
   },
   "notices": {
     "notAFlashcard": "Этот документ не является карточкой",
@@ -87,6 +142,14 @@
     "cardMastered": "Карточка освоена! Добавлена в завершенные.",
     "cardAlreadyMastered": "Эта карточка уже завершена.",
     "cardReset": "Метаданные очищены, карточку можно повторять заново.",
-    "cardUpdated": "Карточка обновлена: следующее повторение {{date}}"
+    "cardUpdated": "Карточка обновлена: следующее повторение {{date}}",
+    "testsDisabled": "Тесты выключены в настройках",
+    "missingApiKey": "Добавьте API-ключ для выбранной нейросети в настройках",
+    "testGenerationStarted": "Генерирую тесты...",
+    "testGenerationFailed": "Не удалось сгенерировать тесты: {{message}}",
+    "testsGenerated": "Сгенерировано тестов: {{count}}",
+    "testUpdated": "Тест обновлен: следующее прохождение {{date}}",
+    "testMastered": "Тест завершен! Добавлен в завершенные.",
+    "testAlreadyMastered": "Этот тест уже завершен."
   }
 }

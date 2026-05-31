@@ -3,6 +3,8 @@ import MemMasterPlugin from '../main';
 import { resetCardReview, updateCardMetadata } from '../core/scheduler';
 import { extractMetadata, isCardCompleted, isCardDueForReview, isFileFlashcard } from '../core/finder';
 import { sleep } from '../core/utils';
+import { generateTestsFromCard } from '../core/test-generator';
+import { countTestsForSourceCard } from '../core/tests';
 
 const MAX_REVIEW_NOTE_LENGTH = 4096;
 
@@ -55,6 +57,14 @@ function addInteractiveBorderEffect(container: HTMLElement): void {
 	});
 }
 
+function getGenerateTestLinkText(plugin: MemMasterPlugin, existingTestCount: number): string {
+	const status = existingTestCount === 0
+		? plugin.i18n.t('reviewFlashcard.generateTestNoTestsStatus')
+		: plugin.i18n.t('reviewFlashcard.generateTestExistingStatus', { count: existingTestCount });
+
+	return `${plugin.i18n.t('reviewFlashcard.generateTest')} (${status})`;
+}
+
 export function createButtonContainer(file: TFile, plugin: MemMasterPlugin, contentLength: number): HTMLElement {
 	const buttonContainer = createDiv({
 		cls: 'mm-estimation-card-buttons-container',
@@ -105,6 +115,64 @@ export function createButtonContainer(file: TFile, plugin: MemMasterPlugin, cont
 
 	buttonContainer.appendChild(textButtonContainer);
 	buttonContainer.appendChild(buttonGroup);
+
+	if (plugin.settings.testsEnabled) {
+		const testActionRow = createDiv({
+			cls: 'mm-generate-test-row',
+		});
+		const generateTestLink = createEl('a', {
+			cls: 'mm-generate-test-button',
+			attr: {
+				href: '#',
+			},
+		});
+		const generateTestIcon = generateTestLink.createSpan({
+			cls: 'mm-generate-test-icon',
+		});
+		setIcon(generateTestIcon, 'sparkles');
+		const generateTestText = generateTestLink.createSpan({
+			text: plugin.i18n.t('reviewFlashcard.generateTest'),
+		});
+		let isGenerating = false;
+
+		const updateGenerateTestText = async () => {
+			const existingTestCount = await countTestsForSourceCard(plugin, file);
+			if (!isGenerating) {
+				generateTestText.setText(getGenerateTestLinkText(plugin, existingTestCount));
+			}
+		};
+
+		void updateGenerateTestText();
+
+		generateTestLink.addEventListener('click', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+
+			if (isGenerating) {
+				return;
+			}
+
+			isGenerating = true;
+			generateTestLink.addClass('is-disabled');
+			generateTestLink.setAttribute('aria-disabled', 'true');
+			generateTestText.setText(plugin.i18n.t('reviewFlashcard.generatingTest'));
+
+			void (async () => {
+				try {
+					await generateTestsFromCard(plugin, file);
+				} finally {
+					isGenerating = false;
+					generateTestLink.removeClass('is-disabled');
+					generateTestLink.removeAttribute('aria-disabled');
+					await updateGenerateTestText();
+				}
+			})();
+		});
+
+		testActionRow.appendChild(generateTestLink);
+		buttonContainer.appendChild(testActionRow);
+	}
+
 	updateNoteLengthWarning(buttonContainer, contentLength, plugin);
 
 	addInteractiveBorderEffect(buttonContainer);
