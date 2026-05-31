@@ -1,7 +1,7 @@
 {
 	"name": "memmaster",
-	"version": "1.0.4",
-	"description": "Create flashcards from notes and study with spaced repetition, active recall, review scheduling, memory retention, and study reminders.",
+	"version": "1.1.0",
+	"description": "Create flashcards and AI-generated tests from notes. Study with spaced repetition, active recall, quizzes, review scheduling, memory retention, OpenAI, and DeepSeek.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
