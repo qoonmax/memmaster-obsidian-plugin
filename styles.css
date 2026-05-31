@@ -79,6 +79,7 @@
     line-height: 1.2;
     cursor: pointer;
     box-shadow: none;
+    transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .mm-view .mm-tab-icon {
@@ -116,13 +117,18 @@
     box-sizing: border-box;
 }
 
-.mm-view .mm-tab-button-active,
-.mm-view .mm-tab-button-active:hover {
+.mm-view .mm-tabs-container > button.mm-tab-button.mm-tab-button-active,
+.mm-view .mm-tabs-container > button.mm-tab-button.mm-tab-button-active:hover,
+.mm-view .mm-tabs-container > button.mm-tab-button[aria-selected="true"] {
     background-color: var(--interactive-accent);
     color: var(--text-on-accent);
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--interactive-accent) 35%, transparent),
+        0 3px 10px color-mix(in srgb, var(--interactive-accent) 22%, transparent);
 }
 
-.mm-view .mm-tab-button-active .mm-tab-count {
+.mm-view .mm-tabs-container > button.mm-tab-button.mm-tab-button-active .mm-tab-count,
+.mm-view .mm-tabs-container > button.mm-tab-button[aria-selected="true"] .mm-tab-count {
     background-color: color-mix(in srgb, var(--text-on-accent) 20%, transparent);
     color: var(--text-on-accent);
 }
