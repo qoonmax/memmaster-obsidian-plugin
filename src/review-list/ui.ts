@@ -155,7 +155,7 @@ export default class ReviewListView extends ItemView {
 			
 			if (isOpening) {
 				// Set options height for border calculation
-				requestAnimationFrame(() => {
+				window.requestAnimationFrame(() => {
 					const optionsHeight = optionsContainer.offsetHeight;
 					dropdownBorder.style.setProperty('--dropdown-options-height', `${optionsHeight}px`);
 				});
@@ -566,7 +566,7 @@ export default class ReviewListView extends ItemView {
 		await this.app.workspace.openLinkText(filePath, '/', false);
 		// Wait for file to open and switch to preview mode if setting is enabled
 		if (this.plugin.settings.openInPreviewMode) {
-			activeWindow.setTimeout(() => {
+			window.setTimeout(() => {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (view && view.file?.path === filePath) {
 					// Find the leaf containing this view
