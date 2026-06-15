@@ -4,10 +4,12 @@
   },
   "commands": {
     "openReviewListView": "Открыть список для повторения",
-    "markAsEasy": "Отметить текущую карточку как Легкая",
-    "markAsMedium": "Отметить текущую карточку как Средняя",
-    "markAsHard": "Отметить текущую карточку как Сложная",
-    "makeFlashcard": "Сделать текущий документ карточкой"
+    "markAsAgain": "Отметить текущую карточку как Снова",
+    "markAsHard": "Отметить текущую карточку как Сложно",
+    "markAsGood": "Отметить текущую карточку как Хорошо",
+    "markAsEasy": "Отметить текущую карточку как Легко",
+    "makeFlashcard": "Сделать текущий документ карточкой",
+    "clearMemMasterMetadata": "Очистить метаданные MemMaster в текущем документе"
   },
   "settings": {
     "flashcardSourceHeading": "Настройки источника карточек",
@@ -88,21 +90,19 @@
   "reviewFlashcard": {
     "difficultyQuestion": "Насколько сложной была эта карточка?",
     "lengthWarning": "В этой заметке {{count}}/{{limit}} символов. Для повторения лучше подходят короткие заметки.",
-    "easy": "Легко",
-    "medium": "Средне",
+    "again": "Снова",
     "hard": "Сложно",
+    "good": "Хорошо",
+    "easy": "Легко",
     "generateTest": "Сгенерировать тест",
     "generateTestExistingStatus": "имеющихся тестов: {{count}}",
     "generateTestNoTestsStatus": "тестов пока нет",
-    "generatingTest": "Генерация...",
-    "completedReviewAction": "Карточка завершена. Очистите метаданные, чтобы повторять ее заново.",
-    "reviewAgain": "Повторять заново"
+    "generatingTest": "Генерация..."
   },
   "reviewList": {
     "viewTitle": "Карточки для повторения",
     "tabs": {
-      "review": "К повторению",
-      "completed": "Завершенные"
+      "review": "К повторению"
     },
     "modes": {
       "cards": "Карточки",
@@ -110,20 +110,14 @@
     },
     "searchPlaceholder": "Поиск карточек...",
     "noFlashcards": "Нет карточек для повторения.",
-    "noCompletedFlashcards": "Пока нет завершенных карточек.",
     "noSearchResults": "Карточки не найдены.",
     "dueCount": "Готово к повторению: {{count}}",
     "testsDueCount": "Тестов к прохождению: {{count}}",
-    "completedCount": "Завершено: {{count}}",
     "overdueByDays": "Просрочено на {{days}} дн.",
     "dueToday": "Сегодня",
-    "completed": "Завершена",
-    "completedOn": "Завершена {{date}}",
     "sortLabel": "Сортировка:",
     "sortOldestFirst": "Сначала самые просроченные",
     "sortNewestFirst": "Сначала наименее просроченные",
-    "sortCompletedNewestFirst": "Сначала недавно завершенные",
-    "sortCompletedOldestFirst": "Сначала давно завершенные",
     "testsDisabled": "Тесты выключены в настройках.",
     "noTests": "Нет тестов для прохождения.",
     "testSource": "Источник: {{name}}",
@@ -140,17 +134,14 @@
     "tagAdded": "Тег добавлен: {{tag}}",
     "movedToFolder": "Перемещено в папку: {{folder}}",
     "alreadyFlashcard": "Этот документ уже является карточкой",
-    "cardMastered": "Карточка освоена! Добавлена в завершенные.",
-    "cardAlreadyMastered": "Эта карточка уже завершена.",
-    "cardReset": "Метаданные очищены, карточку можно повторять заново.",
+    "memMasterMetadataCleared": "Все метаданные MemMaster удалены из этого документа.",
+    "legacyStateReset": "Сброшен стейт интервального повторения для старых элементов MemMaster: {{count}}.",
     "cardUpdated": "Карточка обновлена: следующее повторение {{date}}",
     "testsDisabled": "Тесты выключены в настройках",
     "missingApiKey": "Добавьте API-ключ для выбранной нейросети в настройках",
     "testGenerationStarted": "Генерирую тесты...",
     "testGenerationFailed": "Не удалось сгенерировать тесты: {{message}}",
     "testsGenerated": "Сгенерировано тестов: {{count}}",
-    "testUpdated": "Тест обновлен: следующее прохождение {{date}}",
-    "testMastered": "Тест завершен! Добавлен в завершенные.",
-    "testAlreadyMastered": "Этот тест уже завершен."
+    "testUpdated": "Тест обновлен: следующее прохождение {{date}}"
   }
 }

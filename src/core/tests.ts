@@ -1,6 +1,6 @@
 import { TFile } from 'obsidian';
 import MemMasterPlugin from '../main';
-import { CardMetadata, extractMetadata, isCardCompleted, isCardDueForReview } from './finder';
+import { CardMetadata, extractMetadata, isCardDueForReview } from './finder';
 import { isFileInFolder } from './utils';
 
 export interface TestOption {
@@ -106,7 +106,7 @@ export function buildTestContent(
 	provider: string,
 	now: Date = new Date()
 ): string {
-	const date = now.toISOString().split('T')[0];
+	const date = now.toISOString();
 	const testJson = JSON.stringify({
 		options: test.options,
 		correctOptionId: test.correctOptionId,
@@ -117,7 +117,13 @@ export function buildTestContent(
 		'---',
 		'memmaster-type: test',
 		`memmaster-next-review: ${date}`,
-		'memmaster-stage: 0',
+		'memmaster-fsrs-state: New',
+		'memmaster-fsrs-stability: 0',
+		'memmaster-fsrs-difficulty: 0',
+		'memmaster-fsrs-scheduled-days: 0',
+		'memmaster-fsrs-reps: 0',
+		'memmaster-fsrs-lapses: 0',
+		'memmaster-fsrs-learning-steps: 0',
 		`memmaster-source-card: "${sourceFile.path}"`,
 		`memmaster-provider: ${provider}`,
 		'---',
@@ -197,17 +203,12 @@ export async function getTestsForReview(plugin: MemMasterPlugin): Promise<TestMe
 		}
 
 		const extracted = extractMetadata(content, file);
-		if (extracted && isCardCompleted(extracted)) {
-			continue;
-		}
 
 		const metadata = extracted ?? {
 			nextReview: '',
-			stage: '0',
 			file,
 			content,
-			completed: false,
-			completedAt: '',
+			legacyCompleted: false,
 		};
 
 		if (isCardDueForReview(metadata)) {

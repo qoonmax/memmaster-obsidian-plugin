@@ -495,11 +495,6 @@
     -webkit-mask-repeat: no-repeat;
 }
 
-.mm-view .mm-completed-info::before {
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'%3E%3C/path%3E%3C/svg%3E");
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'%3E%3C/path%3E%3C/svg%3E");
-}
-
 .mm-view .mm-card-grid {
     opacity: 85%;
     display: grid;
@@ -1137,10 +1132,6 @@
     height: 14px;
 }
 
-.mm-completed-card-actions-container .mm-estimation-card-buttons-block {
-    justify-content: stretch;
-}
-
 .mm-estimation-card-button {
     width: 100%;
 
@@ -1167,31 +1158,23 @@
     background-color: var(--background-modifier-hover);
 }
 
-.mm-reset-card-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
-}
-
-.mm-reset-card-button:hover {
-    width: 100%;
-    background-color: var(--interactive-accent);
-    color: var(--text-on-accent);
-}
-
-.mm-easy-button:hover {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.mm-medium-button:hover {
-    background-color: #FFC107;
+.mm-again-button:hover {
+    background-color: #F44336;
     color: white;
 }
 
 .mm-hard-button:hover {
-    background-color: #F44336;
+    background-color: #FF9800;
+    color: white;
+}
+
+.mm-good-button:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.mm-easy-button:hover {
+    background-color: #2196F3;
     color: white;
 }
 

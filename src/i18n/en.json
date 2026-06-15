@@ -4,10 +4,12 @@
   },
   "commands": {
     "openReviewListView": "Open Review List View",
-    "markAsEasy": "Mark current card as Easy",
-    "markAsMedium": "Mark current card as Medium",
+    "markAsAgain": "Mark current card as Again",
     "markAsHard": "Mark current card as Hard",
-    "makeFlashcard": "Make current document a flashcard"
+    "markAsGood": "Mark current card as Good",
+    "markAsEasy": "Mark current card as Easy",
+    "makeFlashcard": "Make current document a flashcard",
+    "clearMemMasterMetadata": "Clear MemMaster metadata from current document"
   },
   "settings": {
     "flashcardSourceHeading": "Flashcard source settings",
@@ -88,21 +90,19 @@
   "reviewFlashcard": {
     "difficultyQuestion": "How difficult was this card?",
     "lengthWarning": "This note is {{count}}/{{limit}} characters. Shorter notes work better for review.",
-    "easy": "Easy",
-    "medium": "Medium",
+    "again": "Again",
     "hard": "Hard",
+    "good": "Good",
+    "easy": "Easy",
     "generateTest": "Generate test",
     "generateTestExistingStatus": "existing tests: {{count}}",
     "generateTestNoTestsStatus": "no tests yet",
-    "generatingTest": "Generating...",
-    "completedReviewAction": "This card is completed. Clear metadata to review it again.",
-    "reviewAgain": "Review again"
+    "generatingTest": "Generating..."
   },
   "reviewList": {
     "viewTitle": "Repetition flashcards",
     "tabs": {
-      "review": "For review",
-      "completed": "Completed"
+      "review": "For review"
     },
     "modes": {
       "cards": "Cards",
@@ -110,20 +110,14 @@
     },
     "searchPlaceholder": "Search flashcards...",
     "noFlashcards": "No flashcards due for review.",
-    "noCompletedFlashcards": "No completed flashcards yet.",
     "noSearchResults": "No flashcards found matching your search.",
     "dueCount": "Ready for review: {{count}}",
     "testsDueCount": "Tests due: {{count}}",
-    "completedCount": "Completed: {{count}}",
     "overdueByDays": "Overdue by {{days}} days",
     "dueToday": "Due today",
-    "completed": "Completed",
-    "completedOn": "Completed {{date}}",
     "sortLabel": "Sort:",
     "sortOldestFirst": "Most overdue first",
     "sortNewestFirst": "Least overdue first",
-    "sortCompletedNewestFirst": "Recently completed first",
-    "sortCompletedOldestFirst": "Oldest completed first",
     "testsDisabled": "Tests are disabled in settings.",
     "noTests": "No tests due for review.",
     "testSource": "Source: {{name}}",
@@ -140,17 +134,14 @@
     "tagAdded": "Tag added: {{tag}}",
     "movedToFolder": "Moved to folder: {{folder}}",
     "alreadyFlashcard": "This document is already a flashcard",
-    "cardMastered": "Card mastered! Added to completed.",
-    "cardAlreadyMastered": "This card is already completed.",
-    "cardReset": "Metadata cleared. This card can be reviewed again.",
+    "memMasterMetadataCleared": "All MemMaster metadata cleared from this document.",
+    "legacyStateReset": "Reset spaced repetition state for {{count}} legacy MemMaster items.",
     "cardUpdated": "Updated card: next review on {{date}}",
     "testsDisabled": "Tests are disabled in settings",
     "missingApiKey": "Add an API key for the selected provider in settings",
     "testGenerationStarted": "Generating tests...",
     "testGenerationFailed": "Could not generate tests: {{message}}",
     "testsGenerated": "Generated tests: {{count}}",
-    "testUpdated": "Updated test: next review on {{date}}",
-    "testMastered": "Test mastered! Added to completed.",
-    "testAlreadyMastered": "This test is already completed."
+    "testUpdated": "Updated test: next review on {{date}}"
   }
 }

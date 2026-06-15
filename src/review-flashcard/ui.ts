@@ -1,7 +1,7 @@
 import { TFile, MarkdownView, setIcon } from 'obsidian';
 import MemMasterPlugin from '../main';
-import { resetCardReview, updateCardMetadata } from '../core/scheduler';
-import { extractMetadata, isCardCompleted, isCardDueForReview, isFileFlashcard } from '../core/finder';
+import { updateCardMetadata } from '../core/scheduler';
+import { extractMetadata, isCardDueForReview, isFileFlashcard } from '../core/finder';
 import { sleep } from '../core/utils';
 import { generateTestsFromCard } from '../core/test-generator';
 import { countTestsForSourceCard } from '../core/tests';
@@ -79,24 +79,14 @@ export function createButtonContainer(file: TFile, plugin: MemMasterPlugin, cont
 		cls: 'mm-estimation-card-buttons-block',
 	});
 
-	const easyButton = createEl('button', {
-		cls: 'mm-estimation-card-button mm-easy-button',
-		text: plugin.i18n.t('reviewFlashcard.easy'),
+	const againButton = createEl('button', {
+		cls: 'mm-estimation-card-button mm-again-button',
+		text: plugin.i18n.t('reviewFlashcard.again'),
 	});
-	easyButton.addEventListener('click', (e) => {
+	againButton.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation(); // Prevent event bubbling
-		void updateCardMetadata(plugin, file, 'easy');
-	});
-
-	const mediumButton = createEl('button', {
-		cls: 'mm-estimation-card-button mm-medium-button',
-		text: plugin.i18n.t('reviewFlashcard.medium'),
-	});
-	mediumButton.addEventListener('click', (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		void updateCardMetadata(plugin, file, 'medium');
+		void updateCardMetadata(plugin, file, 'again');
 	});
 
 	const hardButton = createEl('button', {
@@ -109,9 +99,30 @@ export function createButtonContainer(file: TFile, plugin: MemMasterPlugin, cont
 		void updateCardMetadata(plugin, file, 'hard');
 	});
 
-	buttonGroup.appendChild(easyButton);
-	buttonGroup.appendChild(mediumButton);
+	const goodButton = createEl('button', {
+		cls: 'mm-estimation-card-button mm-good-button',
+		text: plugin.i18n.t('reviewFlashcard.good'),
+	});
+	goodButton.addEventListener('click', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		void updateCardMetadata(plugin, file, 'good');
+	});
+
+	const easyButton = createEl('button', {
+		cls: 'mm-estimation-card-button mm-easy-button',
+		text: plugin.i18n.t('reviewFlashcard.easy'),
+	});
+	easyButton.addEventListener('click', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		void updateCardMetadata(plugin, file, 'easy');
+	});
+
+	buttonGroup.appendChild(againButton);
 	buttonGroup.appendChild(hardButton);
+	buttonGroup.appendChild(goodButton);
+	buttonGroup.appendChild(easyButton);
 
 	buttonContainer.appendChild(textButtonContainer);
 	buttonContainer.appendChild(buttonGroup);
@@ -180,48 +191,6 @@ export function createButtonContainer(file: TFile, plugin: MemMasterPlugin, cont
 	return buttonContainer;
 }
 
-export function createCompletedCardActionsContainer(file: TFile, plugin: MemMasterPlugin, contentLength: number): HTMLElement {
-	const buttonContainer = createDiv({
-		cls: 'mm-estimation-card-buttons-container mm-completed-card-actions-container',
-	});
-
-	const textButtonContainer = createEl('p', {
-		cls: 'mm-estimation-card-text',
-		text: plugin.i18n.t('reviewFlashcard.completedReviewAction'),
-	});
-
-	const buttonGroup = createDiv({
-		cls: 'mm-estimation-card-buttons-block',
-	});
-
-	const resetButton = createEl('button', {
-		cls: 'mm-estimation-card-button mm-reset-card-button',
-		text: plugin.i18n.t('reviewFlashcard.reviewAgain'),
-	});
-
-	resetButton.addEventListener('click', (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-
-		resetButton.disabled = true;
-		void (async () => {
-			const wasReset = await resetCardReview(plugin, file);
-			if (wasReset) {
-				buttonContainer.replaceWith(createButtonContainer(file, plugin, contentLength));
-			} else {
-				resetButton.disabled = false;
-			}
-		})();
-	});
-
-	buttonGroup.appendChild(resetButton);
-	buttonContainer.appendChild(textButtonContainer);
-	buttonContainer.appendChild(buttonGroup);
-	addInteractiveBorderEffect(buttonContainer);
-
-	return buttonContainer;
-}
-
 export async function syncFlashcardButtons(
 	view: MarkdownView, 
 	plugin: MemMasterPlugin,
@@ -263,7 +232,6 @@ export async function syncFlashcardButtons(
 	// Read once per sync and reuse for all preview sections in the same note.
 	const content = await plugin.app.vault.cachedRead(file);
 	const metadata = extractMetadata(content, file);
-	const isCompleted = metadata ? isCardCompleted(metadata) : false;
 	const isDueForReview = !metadata || isCardDueForReview(metadata);
 	const contentLength = getReviewNoteLength(content);
 
@@ -276,27 +244,16 @@ export async function syncFlashcardButtons(
 			container = null;
 		}
 
-		if (!isCompleted && !isDueForReview) {
+		if (!isDueForReview) {
 			container?.remove();
 			return;
 		}
 
-		const hasCompletedActions = Boolean(container?.hasClass('mm-completed-card-actions-container'));
-
-		if (container && hasCompletedActions !== isCompleted) {
-			container.remove();
-			container = null;
-		}
-
 		if (!container) {
-			const buttonContainer = isCompleted
-				? createCompletedCardActionsContainer(file, plugin, contentLength)
-				: createButtonContainer(file, plugin, contentLength);
+			const buttonContainer = createButtonContainer(file, plugin, contentLength);
 			section.appendChild(buttonContainer);
 		} else {
-			if (!isCompleted) {
-				updateNoteLengthWarning(container, contentLength, plugin);
-			}
+			updateNoteLengthWarning(container, contentLength, plugin);
 		}
 	});
 }

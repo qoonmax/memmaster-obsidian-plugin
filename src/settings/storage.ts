@@ -1,6 +1,7 @@
 import {Plugin} from 'obsidian';
 
 interface MemMasterPluginSettings {
+	fsrsMigrationVersion: string;
 	sourceMode: 'tag' | 'folder';
 	tagName: string;
 	folderName: string;
@@ -40,6 +41,7 @@ const DEFAULT_TEST_CLIENT_PROMPT = [
 ].join('\n');
 
 const DEFAULT_SETTINGS: MemMasterPluginSettings = {
+	fsrsMigrationVersion: '',
 	sourceMode: 'tag',
 	tagName: 'flashcard',
 	folderName: 'Flashcards',
@@ -60,6 +62,7 @@ async function loadSettings(plugin: Plugin): Promise<MemMasterPluginSettings> {
 	const data = await plugin.loadData() as Partial<MemMasterPluginSettings> | null;
 
 	return {
+		fsrsMigrationVersion: data?.fsrsMigrationVersion ?? DEFAULT_SETTINGS.fsrsMigrationVersion,
 		sourceMode: data?.sourceMode ?? DEFAULT_SETTINGS.sourceMode,
 		tagName: data?.tagName ?? DEFAULT_SETTINGS.tagName,
 		folderName: data?.folderName ?? DEFAULT_SETTINGS.folderName,
