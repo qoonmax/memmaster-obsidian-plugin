@@ -1,139 +1,12 @@
-import {App, getAllTags, Modal, Notice, PluginSettingTab, Setting, setIcon, TFolder} from 'obsidian';
+import {App, getAllTags, PluginSettingTab, Setting, setIcon, TFolder} from 'obsidian';
 import MemMasterPlugin from '../main';
 import { PLUGIN_EVENTS } from '../core/events';
-import { isValidUserKey } from '../cloud/identity';
-import { CloudUserStatus } from '../cloud/client';
+import { DEEPSEEK_MODEL_OPTIONS, DEFAULT_SETTINGS, OPENAI_MODEL_OPTIONS } from './storage';
 
-class ImportBackupKeyModal extends Modal {
-	private plugin: MemMasterPlugin;
-	private userKey = '';
-	private onImport: () => void;
-
-	constructor(app: App, plugin: MemMasterPlugin, onImport: () => void) {
-		super(app);
-		this.plugin = plugin;
-		this.onImport = onImport;
-	}
-
-	onOpen(): void {
-		const { contentEl } = this;
-		const { i18n } = this.plugin;
-
-		contentEl.empty();
-		contentEl.createEl('h2', { text: i18n.t('settings.cloudIdentity.importModalTitle') });
-		contentEl.createEl('p', { text: i18n.t('settings.cloudIdentity.importModalDesc') });
-
-		new Setting(contentEl)
-			.setName(i18n.t('settings.cloudIdentity.backupKey'))
-			.addText((text) => {
-				text
-					.setPlaceholder(i18n.t('settings.cloudIdentity.importPlaceholder'))
-					.onChange((value) => {
-						this.userKey = value.trim();
-					});
-
-				text.inputEl.focus();
-			});
-
-		new Setting(contentEl)
-			.addButton((button) =>
-				button
-					.setButtonText(i18n.t('settings.cloudIdentity.cancel'))
-					.onClick(() => this.close())
-			)
-			.addButton((button) =>
-				button
-					.setButtonText(i18n.t('settings.cloudIdentity.importButton'))
-					.setCta()
-					.onClick(async () => {
-						if (!isValidUserKey(this.userKey)) {
-							new Notice(i18n.t('notices.invalidBackupKey'));
-							return;
-						}
-
-						button.setDisabled(true);
-
-						try {
-							const status = await this.plugin.checkCloudConnectionStatus(this.userKey);
-
-							if (status.state === 'connected') {
-								this.plugin.settings.userKey = this.userKey;
-								await this.plugin.saveSettings();
-								new Notice(i18n.t('notices.backupKeyImported'));
-								this.onImport();
-								this.close();
-							} else if (status.state === 'not_found') {
-								new Notice(i18n.t('notices.backupKeyNotFound'));
-							} else if (status.state === 'bad_request') {
-								new Notice(i18n.t('notices.invalidBackupKey'));
-							} else {
-								new Notice(i18n.t('notices.cloudUnavailable'));
-							}
-						} catch {
-							new Notice(i18n.t('notices.connectionSaveFailed'));
-						} finally {
-							button.setDisabled(false);
-						}
-					})
-			);
-	}
-
-	onClose(): void {
-		this.contentEl.empty();
-	}
-}
-
-class CreateConnectionConfirmModal extends Modal {
-	private plugin: MemMasterPlugin;
-	private onCreate: () => void;
-
-	constructor(app: App, plugin: MemMasterPlugin, onCreate: () => void) {
-		super(app);
-		this.plugin = plugin;
-		this.onCreate = onCreate;
-	}
-
-	onOpen(): void {
-		const { contentEl } = this;
-		const { i18n } = this.plugin;
-
-		contentEl.empty();
-		contentEl.createEl('h2', { text: i18n.t('settings.cloudIdentity.createModalTitle') });
-		contentEl.createEl('p', { text: i18n.t('settings.cloudIdentity.createModalDesc') });
-
-		new Setting(contentEl)
-			.addButton((button) =>
-				button
-					.setButtonText(i18n.t('settings.cloudIdentity.cancel'))
-					.onClick(() => this.close())
-			)
-			.addButton((button) =>
-				button
-					.setButtonText(i18n.t('settings.cloudIdentity.createConnection'))
-					.setCta()
-					.onClick(async () => {
-						button.setDisabled(true);
-						const isCreated = await this.plugin.createCloudConnection();
-
-						if (isCreated) {
-							new Notice(i18n.t('notices.connectionCreated'));
-							this.onCreate();
-							this.close();
-						} else {
-							button.setDisabled(false);
-						}
-					})
-			);
-	}
-
-	onClose(): void {
-		this.contentEl.empty();
-	}
-}
+const GITHUB_ISSUES_URL = 'https://github.com/qoonmax/memmaster-obsidian-plugin/issues';
 
 export default class MemMasterPluginSettingTab extends PluginSettingTab {
 	plugin: MemMasterPlugin;
-	private cloudConnectionStatusRequestId = 0;
 
 	constructor(app: App, plugin: MemMasterPlugin) {
 		super(app, plugin);
@@ -166,9 +39,9 @@ export default class MemMasterPluginSettingTab extends PluginSettingTab {
 		return Array.from(tags).sort((a, b) => a.localeCompare(b));
 	}
 
-	private getFolderOptions(): string[] {
+	private getFolderOptions(currentFolderName = this.plugin.settings.folderName): string[] {
 		const folders = new Set<string>();
-		const currentFolder = this.normalizeFolderPath(this.plugin.settings.folderName);
+		const currentFolder = this.normalizeFolderPath(currentFolderName);
 
 		if (currentFolder) {
 			folders.add(currentFolder);
@@ -191,177 +64,23 @@ export default class MemMasterPluginSettingTab extends PluginSettingTab {
 		return folderPath.trim().replace(/^\/+|\/+$/g, '');
 	}
 
-	private openCreateConnectionModal(): void {
-		new CreateConnectionConfirmModal(this.app, this.plugin, () => {
-			this.display();
-			this.plugin.events.trigger(PLUGIN_EVENTS.SETTINGS_UPDATED);
-		}).open();
-	}
-
-	private addCloudStatusAction(statusEl: HTMLElement, label: string, onClick: () => void): void {
-		const actionsEl = statusEl.createDiv({ cls: 'mm-cloud-identity-status-actions' });
-		const buttonEl = actionsEl.createEl('button', { text: label });
-
-		buttonEl.addEventListener('click', onClick);
-	}
-
-	private renderCloudIdentityStatus(
-		statusEl: HTMLElement,
-		status: 'checking' | 'missing' | CloudUserStatus
-	): void {
+	private displaySupportFooter(containerEl: HTMLElement): void {
 		const { i18n } = this.plugin;
+		const footerEl = containerEl.createDiv({ cls: 'mm-settings-support-footer' });
+		const iconEl = footerEl.createSpan({ cls: 'mm-settings-support-footer-icon' });
+		setIcon(iconEl, 'github');
 
-		statusEl.empty();
-		statusEl.removeClass('mm-cloud-identity-status-connected');
-		statusEl.removeClass('mm-cloud-identity-status-warning');
-		statusEl.removeClass('mm-cloud-identity-status-error');
-		statusEl.removeClass('mm-cloud-identity-status-loading');
-
-		const iconEl = statusEl.createSpan({ cls: 'mm-cloud-identity-status-icon' });
-		const textEl = statusEl.createDiv({ cls: 'mm-cloud-identity-status-text' });
-
-		if (status === 'checking') {
-			statusEl.addClass('mm-cloud-identity-status-loading');
-			setIcon(iconEl, 'loader-circle');
-			textEl.createEl('strong', { text: i18n.t('settings.cloudIdentity.statusChecking') });
-			textEl.createEl('p', { text: i18n.t('settings.cloudIdentity.statusCheckingDesc') });
-			return;
-		}
-
-		if (status === 'missing') {
-			statusEl.addClass('mm-cloud-identity-status-warning');
-			setIcon(iconEl, 'circle-alert');
-			textEl.createEl('strong', { text: i18n.t('settings.cloudIdentity.statusMissing') });
-			textEl.createEl('p', { text: i18n.t('settings.cloudIdentity.statusMissingDesc') });
-			this.addCloudStatusAction(statusEl, i18n.t('settings.cloudIdentity.createConnection'), () => {
-				this.openCreateConnectionModal();
-			});
-			return;
-		}
-
-		if (status.state === 'connected') {
-			statusEl.addClass('mm-cloud-identity-status-connected');
-			setIcon(iconEl, 'circle-check');
-			textEl.createEl('strong', { text: i18n.t('settings.cloudIdentity.statusConnected') });
-			textEl.createEl('p', {
-				text: i18n.t('settings.cloudIdentity.statusConnectedDesc', {
-					date: new Date(status.user.createdAt).toLocaleString(),
-				}),
-			});
-			return;
-		}
-
-		statusEl.addClass(status.state === 'unavailable'
-			? 'mm-cloud-identity-status-warning'
-			: 'mm-cloud-identity-status-error');
-		setIcon(iconEl, status.state === 'unavailable' ? 'cloud-off' : 'circle-x');
-
-		if (status.state === 'not_found') {
-			textEl.createEl('strong', { text: i18n.t('settings.cloudIdentity.statusNotFound') });
-			textEl.createEl('p', { text: i18n.t('settings.cloudIdentity.statusNotFoundDesc') });
-			this.addCloudStatusAction(statusEl, i18n.t('settings.cloudIdentity.createConnection'), () => {
-				this.openCreateConnectionModal();
-			});
-		} else if (status.state === 'bad_request') {
-			textEl.createEl('strong', { text: i18n.t('settings.cloudIdentity.statusInvalid') });
-			textEl.createEl('p', { text: i18n.t('settings.cloudIdentity.statusInvalidDesc') });
-			this.addCloudStatusAction(statusEl, i18n.t('settings.cloudIdentity.createConnection'), () => {
-				this.openCreateConnectionModal();
-			});
-		} else {
-			textEl.createEl('strong', { text: i18n.t('settings.cloudIdentity.statusUnavailable') });
-			textEl.createEl('p', { text: i18n.t('settings.cloudIdentity.statusUnavailableDesc') });
-			this.addCloudStatusAction(statusEl, i18n.t('settings.cloudIdentity.tryAgain'), () => {
-				void this.refreshCloudIdentityStatus(statusEl);
-			});
-		}
-	}
-
-	private async refreshCloudIdentityStatus(statusEl: HTMLElement): Promise<void> {
-		const requestId = ++this.cloudConnectionStatusRequestId;
-
-		if (!this.plugin.settings.userKey) {
-			this.renderCloudIdentityStatus(statusEl, 'checking');
-			const isCreated = await this.plugin.ensureCloudConnection();
-
-			if (requestId !== this.cloudConnectionStatusRequestId) {
-				return;
-			}
-
-			if (!isCreated || !this.plugin.settings.userKey) {
-				this.renderCloudIdentityStatus(statusEl, 'missing');
-				return;
-			}
-
-			this.display();
-			return;
-		}
-
-		this.renderCloudIdentityStatus(statusEl, 'checking');
-		const status = await this.plugin.checkCloudConnectionStatus();
-
-		if (requestId !== this.cloudConnectionStatusRequestId) {
-			return;
-		}
-
-		this.renderCloudIdentityStatus(statusEl, status);
-	}
-
-	private displayCloudIdentitySettings(containerEl: HTMLElement): void {
-		const { i18n } = this.plugin;
-		const hasUserKey = Boolean(this.plugin.settings.userKey);
-
-		new Setting(containerEl)
-			.setName(i18n.t('settings.cloudIdentity.heading'))
-			.setDesc(i18n.t('settings.cloudIdentity.desc'))
-			.setHeading();
-
-		const infoEl = containerEl.createDiv({ cls: 'mm-cloud-identity-callout' });
-		const iconEl = infoEl.createSpan({ cls: 'mm-cloud-identity-callout-icon' });
-		setIcon(iconEl, 'sparkles');
-
-		const textEl = infoEl.createDiv({ cls: 'mm-cloud-identity-callout-text' });
-		textEl.createEl('strong', { text: i18n.t('settings.cloudIdentity.calloutTitle') });
-		textEl.createEl('p', { text: i18n.t('settings.cloudIdentity.calloutBody') });
-
-		const statusEl = containerEl.createDiv({ cls: 'mm-cloud-identity-status' });
-		void this.refreshCloudIdentityStatus(statusEl);
-
-		if (hasUserKey) {
-			new Setting(containerEl)
-				.setName(i18n.t('settings.cloudIdentity.copyBackupKey'))
-				.setDesc(i18n.t('settings.cloudIdentity.copyBackupKeyDesc'))
-				.addButton((button) =>
-					button
-						.setButtonText(i18n.t('settings.cloudIdentity.copyBackupKey'))
-						.onClick(async () => {
-							if (!this.plugin.settings.userKey) {
-								return;
-							}
-
-							try {
-								await globalThis.navigator.clipboard.writeText(this.plugin.settings.userKey);
-								new Notice(i18n.t('notices.backupKeyCopied'));
-							} catch {
-								new Notice(i18n.t('notices.backupKeyCopyFailed'));
-							}
-						})
-				);
-		}
-
-		new Setting(containerEl)
-			.setName(i18n.t('settings.cloudIdentity.importBackupKey'))
-			.setDesc(i18n.t('settings.cloudIdentity.importBackupKeyDesc'))
-			.addButton((button) =>
-				button
-					.setButtonText(i18n.t('settings.cloudIdentity.importBackupKey'))
-					.onClick(() => {
-						new ImportBackupKeyModal(this.app, this.plugin, () => {
-							this.display();
-							this.plugin.events.trigger(PLUGIN_EVENTS.SETTINGS_UPDATED);
-						}).open();
-					})
-			);
+		const textEl = footerEl.createDiv({ cls: 'mm-settings-support-footer-text' });
+		textEl.createEl('strong', { text: i18n.t('settings.support.title') });
+		textEl.createEl('span', { text: i18n.t('settings.support.desc') });
+		textEl.createEl('a', {
+			text: i18n.t('settings.support.linkLabel'),
+			attr: {
+				href: GITHUB_ISSUES_URL,
+				target: '_blank',
+				rel: 'noopener noreferrer',
+			},
+		});
 	}
 
 	display(): void {
@@ -474,12 +193,151 @@ export default class MemMasterPluginSettingTab extends PluginSettingTab {
 					})
 			);
 
-		this.displayCloudIdentitySettings(containerEl);
+		new Setting(containerEl)
+			.setName(i18n.t('settings.testsHeading'))
+			.setHeading();
+
+		new Setting(containerEl)
+			.setName(i18n.t('settings.testsEnabled.name'))
+			.setDesc(i18n.t('settings.testsEnabled.desc'))
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.testsEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.testsEnabled = value;
+						await this.plugin.saveSettings();
+						this.display();
+
+						this.plugin.events.trigger(PLUGIN_EVENTS.SETTINGS_UPDATED);
+					})
+			);
+
+		if (this.plugin.settings.testsEnabled) {
+			const currentTestsFolder = this.normalizeFolderPath(this.plugin.settings.testsFolderName)
+				|| DEFAULT_SETTINGS.testsFolderName;
+			const testsFolderOptions = this.getFolderOptions(currentTestsFolder);
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.testsFolderName.name'))
+				.setDesc(i18n.t('settings.testsFolderName.desc'))
+				.addDropdown((dropdown) => {
+					testsFolderOptions.forEach((folderPath) => {
+						dropdown.addOption(folderPath, folderPath);
+					});
+
+					return dropdown
+						.setValue(currentTestsFolder)
+						.onChange(async (value) => {
+							this.plugin.settings.testsFolderName = value;
+							await this.plugin.saveSettings();
+
+							this.plugin.events.trigger(PLUGIN_EVENTS.SETTINGS_UPDATED);
+						});
+				});
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.aiProvider.name'))
+				.setDesc(i18n.t('settings.aiProvider.desc'))
+				.addDropdown((dropdown) =>
+					dropdown
+						.addOption('openai', i18n.t('settings.aiProvider.openai'))
+						.addOption('deepseek', i18n.t('settings.aiProvider.deepseek'))
+						.setValue(this.plugin.settings.aiProvider)
+						.onChange(async (value: 'openai' | 'deepseek') => {
+							this.plugin.settings.aiProvider = value;
+							await this.plugin.saveSettings();
+
+							this.plugin.events.trigger(PLUGIN_EVENTS.SETTINGS_UPDATED);
+						})
+				);
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.openaiApiKey.name'))
+				.setDesc(i18n.t('settings.openaiApiKey.desc'))
+				.addText((text) =>
+					text
+						.setPlaceholder(i18n.t('settings.openaiApiKey.placeholder'))
+						.setValue(this.plugin.settings.openaiApiKey)
+						.onChange(async (value) => {
+							this.plugin.settings.openaiApiKey = value.trim();
+							await this.plugin.saveSettings();
+						})
+				);
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.openaiModel.name'))
+				.setDesc(i18n.t('settings.openaiModel.desc'))
+				.addDropdown((dropdown) => {
+					const options = new Set([this.plugin.settings.openaiModel, ...OPENAI_MODEL_OPTIONS]);
+					options.forEach((model) => {
+						dropdown.addOption(model, model);
+					});
+
+					return dropdown
+						.setValue(this.plugin.settings.openaiModel)
+						.onChange(async (value) => {
+							this.plugin.settings.openaiModel = value;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.deepseekApiKey.name'))
+				.setDesc(i18n.t('settings.deepseekApiKey.desc'))
+				.addText((text) =>
+					text
+						.setPlaceholder(i18n.t('settings.deepseekApiKey.placeholder'))
+						.setValue(this.plugin.settings.deepseekApiKey)
+						.onChange(async (value) => {
+							this.plugin.settings.deepseekApiKey = value.trim();
+							await this.plugin.saveSettings();
+						})
+				);
+
+			new Setting(containerEl)
+				.setName(i18n.t('settings.deepseekModel.name'))
+				.setDesc(i18n.t('settings.deepseekModel.desc'))
+				.addDropdown((dropdown) => {
+					const options = new Set([this.plugin.settings.deepseekModel, ...DEEPSEEK_MODEL_OPTIONS]);
+					options.forEach((model) => {
+						dropdown.addOption(model, model);
+					});
+
+					return dropdown
+						.setValue(this.plugin.settings.deepseekModel)
+						.onChange(async (value) => {
+							this.plugin.settings.deepseekModel = value;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			const clientPromptSetting = new Setting(containerEl)
+				.setName(i18n.t('settings.testClientPrompt.name'))
+				.setDesc(i18n.t('settings.testClientPrompt.desc'));
+
+			clientPromptSetting.settingEl.addClass('mm-test-client-prompt-setting');
+
+			clientPromptSetting
+				.addTextArea((text) => {
+					text.inputEl.rows = 5;
+					text.inputEl.addClass('mm-test-client-prompt-textarea');
+
+					return text
+						.setPlaceholder(i18n.t('settings.testClientPrompt.placeholder'))
+						.setValue(this.plugin.settings.testClientPrompt)
+						.onChange(async (value) => {
+							this.plugin.settings.testClientPrompt = value;
+							await this.plugin.saveSettings();
+						});
+				});
+		}
 
 		// Add heading for hotkeys settings
 		new Setting(containerEl)
 			.setName(i18n.t('settings.hotkeysHeading'))
 			.setDesc(i18n.t('settings.hotkeysDesc'))
 			.setHeading();
+
+		this.displaySupportFooter(containerEl);
 	}
 }

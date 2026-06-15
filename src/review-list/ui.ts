@@ -1,9 +1,11 @@
 import {ItemView, WorkspaceLeaf, MarkdownView, setIcon} from 'obsidian';
 import MemMasterPlugin from '../main';
-import { getCompletedFlashcards, getFlashcardsForReview } from '../core/finder';
+import { getFlashcardsForReview } from '../core/finder';
 import { PLUGIN_EVENTS } from '../core/events';
+import { getTestsForReview, TestMetadata } from '../core/tests';
+import { updateTestMetadata } from '../core/scheduler';
 
-type ReviewListTab = 'review' | 'completed';
+type ReviewMode = 'cards' | 'tests';
 type SortOrder = 'oldest-first' | 'newest-first';
 
 export default class ReviewListView extends ItemView {
@@ -11,7 +13,7 @@ export default class ReviewListView extends ItemView {
 	private plugin: MemMasterPlugin;
 	private searchQuery = ''; // Add search state
 	private sortOrder: SortOrder = 'oldest-first'; // Add sort order state
-	private activeTab: ReviewListTab = 'review';
+	private activeMode: ReviewMode = 'cards';
 	private documentClickHandler: (() => void) | null = null; // Handler reference for cleanup
 	private documentClickHandlerDocument: Document | null = null;
 
@@ -33,39 +35,23 @@ export default class ReviewListView extends ItemView {
 		const container = this.contentEl;
 		container.empty();
 
-		const reviewFlashcards = await getFlashcardsForReview(this.plugin);
-		const completedFlashcards = await getCompletedFlashcards(this.plugin);
-		const sortedFlashcards = this.activeTab === 'review'
-			? reviewFlashcards
-			: completedFlashcards;
+		const testsEnabled = this.plugin.settings.testsEnabled;
+		const [reviewFlashcards, tests] = await Promise.all([
+			getFlashcardsForReview(this.plugin),
+			testsEnabled ? getTestsForReview(this.plugin) : Promise.resolve([]),
+		]);
 
-		const tabsContainer = container.createDiv({
-			cls: 'mm-tabs-container',
-			attr: { role: 'tablist' },
+		this.renderModeSwitch(container, {
+			cards: reviewFlashcards.length,
+			tests: tests.length,
 		});
-		this.createTabButton(
-			tabsContainer,
-			'review',
-			this.plugin.i18n.t('reviewList.tabs.review'),
-			'clock',
-			reviewFlashcards.length,
-			this.plugin.i18n.t('reviewList.dueCount', { count: reviewFlashcards.length.toString() })
-		);
-		this.createTabButton(
-			tabsContainer,
-			'completed',
-			this.plugin.i18n.t('reviewList.tabs.completed'),
-			'check-circle',
-			completedFlashcards.length,
-			this.plugin.i18n.t('reviewList.completedCount', { count: completedFlashcards.length.toString() })
-		);
-		tabsContainer.addEventListener('mousemove', (e) => {
-			const rect = tabsContainer.getBoundingClientRect();
-			const x = ((e.clientX - rect.left) / rect.width) * 100;
-			const y = ((e.clientY - rect.top) / rect.height) * 100;
-			tabsContainer.style.setProperty('--mouse-x', `${x}%`);
-			tabsContainer.style.setProperty('--mouse-y', `${y}%`);
-		});
+
+		if (this.activeMode === 'tests') {
+			this.renderTestsContent(container, tests);
+			return;
+		}
+
+		const sortedFlashcards = reviewFlashcards;
 
 		// Add search box container
 		const searchContainer = container.createDiv({
@@ -169,7 +155,7 @@ export default class ReviewListView extends ItemView {
 			
 			if (isOpening) {
 				// Set options height for border calculation
-				requestAnimationFrame(() => {
+				window.requestAnimationFrame(() => {
 					const optionsHeight = optionsContainer.offsetHeight;
 					dropdownBorder.style.setProperty('--dropdown-options-height', `${optionsHeight}px`);
 				});
@@ -226,11 +212,7 @@ export default class ReviewListView extends ItemView {
 		// If there are no cards in the selected tab, show a message
 		if (sortedFlashcards.length === 0) {
 			const noFlashcardsMessage = container.createDiv({ cls: 'mm-no-flashcards' });
-			noFlashcardsMessage.setText(
-				this.activeTab === 'review'
-					? this.plugin.i18n.t('reviewList.noFlashcards')
-					: this.plugin.i18n.t('reviewList.noCompletedFlashcards')
-			);
+			noFlashcardsMessage.setText(this.plugin.i18n.t('reviewList.noFlashcards'));
 			return;
 		}
 
@@ -257,21 +239,12 @@ export default class ReviewListView extends ItemView {
 				daysOverdue = Math.floor((new Date().getTime() - reviewDate.getTime()) / (1000 * 60 * 60 * 24));
 			}
 			card.setAttribute('data-overdue-days', daysOverdue.toString());
-			const completedAtTime = new Date(metadata.completedAt).getTime();
-			card.setAttribute('data-completed-time', (Number.isNaN(completedAtTime) ? 0 : completedAtTime).toString());
 
 			// Add header - file name
 			const headerContainer = card.createDiv({ cls: 'mm-card-header' });
 			headerContainer.createEl('h4', { text: metadata.file.basename });
 
-			if (this.activeTab === 'completed') {
-				headerContainer.createSpan({
-					cls: 'mm-review-info mm-completed-info',
-					text: metadata.completedAt
-						? this.plugin.i18n.t('reviewList.completedOn', { date: metadata.completedAt })
-						: this.plugin.i18n.t('reviewList.completed')
-				});
-			} else if (metadata.nextReview) {
+			if (metadata.nextReview) {
 				headerContainer.createSpan({
 					cls: 'mm-review-info',
 					text: daysOverdue > 0 
@@ -350,27 +323,56 @@ export default class ReviewListView extends ItemView {
 		this.sortCards();
 	}
 
-	private createTabButton(
+	private renderModeSwitch(container: HTMLElement, counts: Record<ReviewMode, number>): void {
+		if (!this.plugin.settings.testsEnabled) {
+			this.activeMode = 'cards';
+			return;
+		}
+
+		const modeContainer = container.createDiv({
+			cls: 'mm-mode-switch-container',
+			attr: { role: 'tablist' },
+		});
+
+		this.createModeButton(
+			modeContainer,
+			'cards',
+			this.plugin.i18n.t('reviewList.modes.cards'),
+			'square-library',
+			counts.cards,
+			this.plugin.i18n.t('reviewList.dueCount', { count: counts.cards.toString() })
+		);
+		this.createModeButton(
+			modeContainer,
+			'tests',
+			this.plugin.i18n.t('reviewList.modes.tests'),
+			'list-checks',
+			counts.tests,
+			this.plugin.i18n.t('reviewList.testsDueCount', { count: counts.tests.toString() })
+		);
+	}
+
+	private createModeButton(
 		container: HTMLElement,
-		tab: ReviewListTab,
+		mode: ReviewMode,
 		text: string,
 		icon: string,
 		count?: number,
 		countLabel?: string
 	): void {
-		const tabButton = container.createEl('button', {
-			cls: `mm-tab-button ${this.activeTab === tab ? 'mm-tab-button-active' : ''}`,
+		const modeButton = container.createEl('button', {
+			cls: `mm-mode-button ${this.activeMode === mode ? 'mm-mode-button-active' : ''}`,
 			attr: {
 				role: 'tab',
-				'aria-selected': this.activeTab === tab ? 'true' : 'false',
+				'aria-selected': this.activeMode === mode ? 'true' : 'false',
 			},
 		});
-		const iconEl = tabButton.createSpan({ cls: 'mm-tab-icon' });
+		const iconEl = modeButton.createSpan({ cls: 'mm-tab-icon' });
 		setIcon(iconEl, icon);
-		tabButton.createSpan({ cls: 'mm-tab-text', text });
+		modeButton.createSpan({ cls: 'mm-tab-text', text });
 		if (count !== undefined) {
 			const label = countLabel ?? count.toString();
-			tabButton.createSpan({
+			modeButton.createSpan({
 				cls: 'mm-tab-count',
 				text: count.toString(),
 				attr: {
@@ -380,24 +382,122 @@ export default class ReviewListView extends ItemView {
 			});
 		}
 
-		tabButton.addEventListener('click', () => {
-			if (this.activeTab === tab) {
+		modeButton.addEventListener('click', () => {
+			if (this.activeMode === mode) {
 				return;
 			}
 
-			this.activeTab = tab;
+			this.activeMode = mode;
 			void this.renderContent();
 		});
 	}
 
-	private getSortOptions(): Array<{ value: SortOrder; text: string }> {
-		if (this.activeTab === 'completed') {
-			return [
-				{ value: 'oldest-first', text: this.plugin.i18n.t('reviewList.sortCompletedNewestFirst') },
-				{ value: 'newest-first', text: this.plugin.i18n.t('reviewList.sortCompletedOldestFirst') },
-			];
+	private renderTestsContent(container: HTMLElement, tests: TestMetadata[]): void {
+		if (!this.plugin.settings.testsEnabled) {
+			container.createDiv({ cls: 'mm-no-flashcards', text: this.plugin.i18n.t('reviewList.testsDisabled') });
+			return;
 		}
 
+		if (tests.length === 0) {
+			container.createDiv({ cls: 'mm-no-flashcards', text: this.plugin.i18n.t('reviewList.noTests') });
+			return;
+		}
+
+		this.renderTestCard(container, tests[0]);
+	}
+
+	private renderTestCard(container: HTMLElement, metadata: TestMetadata): void {
+		const testShell = container.createDiv({ cls: 'mm-test-review-shell' });
+		const testCard = testShell.createDiv({ cls: 'mm-test-card' });
+		const testHeader = testCard.createDiv({ cls: 'mm-test-header' });
+		testHeader.createEl('h3', { text: metadata.test.question });
+
+		if (metadata.sourcePath) {
+			const sourceLink = testHeader.createEl('a', {
+				cls: 'mm-test-source',
+				text: this.plugin.i18n.t('reviewList.testSource', { name: this.getFileNameFromPath(metadata.sourcePath) }),
+				attr: {
+					href: metadata.sourcePath,
+					'data-href': metadata.sourcePath,
+					title: metadata.sourcePath,
+				},
+			});
+			sourceLink.addEventListener('click', (event) => {
+				event.preventDefault();
+				void this.openCardFile(metadata.sourcePath);
+			});
+		}
+
+		const optionsContainer = testCard.createDiv({ cls: 'mm-test-options' });
+		const feedback = testCard.createDiv({ cls: 'mm-test-feedback mm-hidden' });
+		const feedbackTitle = feedback.createEl('strong');
+		const feedbackExplanation = feedback.createEl('p');
+		const nextButton = testCard.createEl('button', {
+			cls: 'mm-test-next-button mm-hidden',
+			text: this.plugin.i18n.t('reviewList.showNextTest'),
+		});
+		nextButton.addEventListener('click', () => {
+			void this.renderContent();
+		});
+
+		metadata.test.options.forEach((option) => {
+			const optionButton = optionsContainer.createEl('button', {
+				cls: 'mm-test-option-button',
+				attr: {
+					type: 'button',
+				},
+			});
+			optionButton.createSpan({ cls: 'mm-test-option-id', text: option.id });
+			optionButton.createSpan({ cls: 'mm-test-option-text', text: option.text });
+
+			optionButton.addEventListener('click', () => {
+				const selectedId = option.id;
+				const isCorrect = selectedId === metadata.test.correctOptionId;
+
+				optionsContainer.querySelectorAll<HTMLButtonElement>('.mm-test-option-button').forEach((button) => {
+					button.disabled = true;
+					const buttonId = button.querySelector('.mm-test-option-id')?.textContent ?? '';
+
+					if (buttonId === metadata.test.correctOptionId) {
+						button.addClass('mm-test-option-correct');
+					} else if (buttonId === selectedId) {
+						button.addClass('mm-test-option-wrong');
+					}
+				});
+
+				feedback.removeClass('mm-hidden');
+				feedback.addClass(isCorrect ? 'mm-test-feedback-correct' : 'mm-test-feedback-wrong');
+				feedbackTitle.setText(
+					isCorrect
+						? this.plugin.i18n.t('reviewList.testAnsweredCorrect')
+						: this.plugin.i18n.t('reviewList.testAnsweredWrong')
+				);
+				feedbackExplanation.setText(
+					metadata.test.explanation
+						? `${this.plugin.i18n.t('reviewList.testExplanation')}: ${metadata.test.explanation}`
+						: this.plugin.i18n.t('reviewList.chooseAnswer')
+				);
+				nextButton.removeClass('mm-hidden');
+
+				void updateTestMetadata(this.plugin, metadata.file, isCorrect ? 'good' : 'again');
+				});
+			});
+
+		testCard.addEventListener('mousemove', (e) => {
+			const rect = testCard.getBoundingClientRect();
+			const x = ((e.clientX - rect.left) / rect.width) * 100;
+			const y = ((e.clientY - rect.top) / rect.height) * 100;
+			testCard.style.setProperty('--mouse-x', `${x}%`);
+			testCard.style.setProperty('--mouse-y', `${y}%`);
+		});
+	}
+
+	private getFileNameFromPath(path: string): string {
+		const normalizedPath = path.replace(/\\/g, '/');
+		return normalizedPath.split('/').pop()?.replace(/\.md$/i, '') ?? path;
+	}
+
+	private getSortOptions(): Array<{ value: SortOrder; text: string }> {
 		return [
 			{ value: 'oldest-first', text: this.plugin.i18n.t('reviewList.sortOldestFirst') },
 			{ value: 'newest-first', text: this.plugin.i18n.t('reviewList.sortNewestFirst') },
@@ -446,15 +546,6 @@ export default class ReviewListView extends ItemView {
 		const cards = Array.from(grid.querySelectorAll('.mm-card'));
 		
 		cards.sort((a, b) => {
-			if (this.activeTab === 'completed') {
-				const timeA = parseInt(a.getAttribute('data-completed-time') || '0');
-				const timeB = parseInt(b.getAttribute('data-completed-time') || '0');
-
-				return this.sortOrder === 'oldest-first'
-					? timeB - timeA
-					: timeA - timeB;
-			}
-
 			const daysA = parseInt(a.getAttribute('data-overdue-days') || '0');
 			const daysB = parseInt(b.getAttribute('data-overdue-days') || '0');
 
@@ -475,7 +566,7 @@ export default class ReviewListView extends ItemView {
 		await this.app.workspace.openLinkText(filePath, '/', false);
 		// Wait for file to open and switch to preview mode if setting is enabled
 		if (this.plugin.settings.openInPreviewMode) {
-			activeWindow.setTimeout(() => {
+			window.setTimeout(() => {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (view && view.file?.path === filePath) {
 					// Find the leaf containing this view

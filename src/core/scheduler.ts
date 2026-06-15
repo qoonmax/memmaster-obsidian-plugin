@@ -1,4 +1,5 @@
 import { TFile, Notice } from 'obsidian';
+import { Card, createEmptyCard, fsrs, Grade, Rating, State } from 'ts-fsrs';
 import MemMasterPlugin from '../main';
 import { PLUGIN_EVENTS } from './events';
 import { isFileInFolder } from './utils';
@@ -9,7 +10,33 @@ interface ParsedContent {
     body: string;
 }
 
-const MAX_REVIEW_STAGE = 10;
+type ReviewItemType = 'card' | 'test';
+type ReviewRating = 'again' | 'hard' | 'good' | 'easy';
+
+const FSRS_PARAMETERS = {
+    enable_short_term: false,
+};
+
+const MEMMASTER_FSRS_KEYS = [
+    "memmaster-next-review",
+    "memmaster-stage",
+    "memmaster-completed",
+    "memmaster-completed-at",
+    "memmaster-fsrs-state",
+    "memmaster-fsrs-stability",
+    "memmaster-fsrs-difficulty",
+    "memmaster-fsrs-scheduled-days",
+    "memmaster-fsrs-reps",
+    "memmaster-fsrs-lapses",
+    "memmaster-fsrs-learning-steps",
+    "memmaster-fsrs-last-review",
+];
+
+const MEMMASTER_LEGACY_SCHEDULING_KEYS = [
+    "memmaster-stage",
+    "memmaster-completed",
+    "memmaster-completed-at",
+];
 
 // New function to extract and parse frontmatter
 function parseFrontmatter(content: string): ParsedContent {
@@ -53,88 +80,186 @@ function buildContentWithOptionalFrontmatter(metadata: Record<string, string>, b
     return buildContentWithFrontmatter(metadata, body);
 }
 
-function clearMemMasterMetadata(metadata: Record<string, string>): void {
-    delete metadata["memmaster-next-review"];
-    delete metadata["memmaster-stage"];
-    delete metadata["memmaster-completed"];
-    delete metadata["memmaster-completed-at"];
+function parseNumber(value: string | undefined, fallback: number): number {
+    if (!value) {
+        return fallback;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export async function updateCardMetadata(plugin: MemMasterPlugin, file: TFile, difficulty: string) {
+function parseInteger(value: string | undefined, fallback: number): number {
+    if (!value) {
+        return fallback;
+    }
+
+    const parsed = parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function parseDate(value: string | undefined): Date | undefined {
+    if (!value) {
+        return undefined;
+    }
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function parseState(value: string | undefined): State {
+    if (!value) {
+        return State.New;
+    }
+
+    const numericState = Number(value);
+    const validStates = [State.New, State.Learning, State.Review, State.Relearning] as number[];
+    if (Number.isInteger(numericState) && validStates.includes(numericState)) {
+        return numericState as State;
+    }
+
+    const state = State[value.trim() as keyof typeof State];
+    return typeof state === 'number' ? state : State.New;
+}
+
+function getElapsedDays(lastReview: Date | undefined, now: Date): number {
+    if (!lastReview) {
+        return 0;
+    }
+
+    const millisecondsPerDay = 24 * 60 * 60 * 1000;
+    return Math.max(0, Math.floor((now.getTime() - lastReview.getTime()) / millisecondsPerDay));
+}
+
+function getFsrsCard(metadata: Record<string, string>, now: Date): Card {
+    if (!metadata["memmaster-fsrs-state"]) {
+        return createEmptyCard(now);
+    }
+
+    const lastReview = parseDate(metadata["memmaster-fsrs-last-review"]);
+
+    return {
+        due: parseDate(metadata["memmaster-next-review"]) ?? now,
+        stability: parseNumber(metadata["memmaster-fsrs-stability"], 0),
+        difficulty: parseNumber(metadata["memmaster-fsrs-difficulty"], 0),
+        elapsed_days: getElapsedDays(lastReview, now),
+        scheduled_days: parseInteger(metadata["memmaster-fsrs-scheduled-days"], 0),
+        learning_steps: parseInteger(metadata["memmaster-fsrs-learning-steps"], 0),
+        reps: parseInteger(metadata["memmaster-fsrs-reps"], 0),
+        lapses: parseInteger(metadata["memmaster-fsrs-lapses"], 0),
+        state: parseState(metadata["memmaster-fsrs-state"]),
+        last_review: lastReview,
+    };
+}
+
+function writeFsrsCardMetadata(metadata: Record<string, string>, card: Card): void {
+    MEMMASTER_FSRS_KEYS.forEach((key) => delete metadata[key]);
+
+    metadata["memmaster-next-review"] = card.due.toISOString();
+
+    if (card.last_review) {
+        metadata["memmaster-fsrs-last-review"] = card.last_review.toISOString();
+    }
+
+    metadata["memmaster-fsrs-state"] = State[card.state];
+    metadata["memmaster-fsrs-stability"] = card.stability.toString();
+    metadata["memmaster-fsrs-difficulty"] = card.difficulty.toString();
+    metadata["memmaster-fsrs-scheduled-days"] = card.scheduled_days.toString();
+    metadata["memmaster-fsrs-reps"] = card.reps.toString();
+    metadata["memmaster-fsrs-lapses"] = card.lapses.toString();
+    metadata["memmaster-fsrs-learning-steps"] = card.learning_steps.toString();
+}
+
+function hasLegacySchedulingMetadata(metadata: Record<string, string>): boolean {
+    return MEMMASTER_LEGACY_SCHEDULING_KEYS.some((key) => key in metadata)
+        && !metadata["memmaster-fsrs-state"];
+}
+
+function mapReviewRating(rating: ReviewRating): Grade {
+    if (rating === "again") {
+        return Rating.Again;
+    }
+    if (rating === "hard") {
+        return Rating.Hard;
+    }
+    if (rating === "good") {
+        return Rating.Good;
+    }
+
+    return Rating.Easy;
+}
+
+async function updateReviewMetadata(plugin: MemMasterPlugin, file: TFile, rating: ReviewRating, itemType: ReviewItemType) {
     const content = await plugin.app.vault.read(file);
 
     // Extract YAML frontmatter
     const { metadata, body } = parseFrontmatter(content);
 
-    if (metadata["memmaster-completed"]?.toLowerCase() === "true" || metadata["memmaster-completed-at"]) {
-        new Notice(plugin.i18n.t('notices.cardAlreadyMastered'));
-        return;
-    }
-
-    // Update stage and review date
     const now = new Date();
-    let nextInterval: number;
-    let stage = parseInt(metadata["memmaster-stage"] || "0", 10);
-    if (Number.isNaN(stage)) {
-        stage = 0;
-    }
-
-    if (difficulty === "easy") {
-        nextInterval = Math.pow(2, stage);
-        stage++;
-    } else if (difficulty === "medium") {
-        nextInterval = Math.pow(1.5, stage);
-        stage++;
-    } else if (difficulty === "hard") {
-        nextInterval = Math.max(1, Math.floor(Math.pow(1.2, stage)));
-        stage++;
-    } else {
-        // Default fallback for unknown difficulty
-        nextInterval = 1;
-        stage++;
-    }
-
-    // Mark the card as completed after the last review stage.
-    if (stage > MAX_REVIEW_STAGE) {
-        delete metadata["memmaster-next-review"];
-        metadata["memmaster-stage"] = stage.toString();
-        metadata["memmaster-completed"] = "true";
-        metadata["memmaster-completed-at"] = now.toISOString().split("T")[0];
-
-        await plugin.app.vault.modify(file, buildContentWithFrontmatter(metadata, body));
-        new Notice(plugin.i18n.t('notices.cardMastered'));
-
-        // Refresh review list view
-        plugin.events.trigger(PLUGIN_EVENTS.CARD_UPDATED);
-        return;
-    }
-
-    // If stage is not above 10, proceed with normal update
-    const nextDate = new Date(now.getTime() + nextInterval * 24 * 60 * 60 * 1000);
-    metadata["memmaster-next-review"] = nextDate.toISOString().split("T")[0];
-    metadata["memmaster-stage"] = stage.toString();
-    delete metadata["memmaster-completed"];
-    delete metadata["memmaster-completed-at"];
+    const scheduler = fsrs(FSRS_PARAMETERS);
+    const result = scheduler.next(getFsrsCard(metadata, now), now, mapReviewRating(rating));
+    writeFsrsCardMetadata(metadata, result.card);
 
     // Write back to file
     await plugin.app.vault.modify(file, buildContentWithFrontmatter(metadata, body));
-    new Notice(plugin.i18n.t('notices.cardUpdated', { date: metadata["memmaster-next-review"] }));
+    new Notice(plugin.i18n.t(
+        itemType === 'test' ? 'notices.testUpdated' : 'notices.cardUpdated',
+        { date: metadata["memmaster-next-review"] }
+    ));
 
     // Refresh review list view
-    plugin.events.trigger(PLUGIN_EVENTS.CARD_UPDATED);
+    plugin.events.trigger(itemType === 'test' ? PLUGIN_EVENTS.TEST_UPDATED : PLUGIN_EVENTS.CARD_UPDATED);
 }
 
-export async function resetCardReview(plugin: MemMasterPlugin, file: TFile): Promise<boolean> {
+export async function updateCardMetadata(plugin: MemMasterPlugin, file: TFile, rating: ReviewRating) {
+    await updateReviewMetadata(plugin, file, rating, 'card');
+}
+
+export async function updateTestMetadata(plugin: MemMasterPlugin, file: TFile, rating: Extract<ReviewRating, 'good' | 'again'>) {
+    await updateReviewMetadata(plugin, file, rating, 'test');
+}
+
+export async function clearAllMemMasterMetadata(plugin: MemMasterPlugin, file: TFile): Promise<boolean> {
     const content = await plugin.app.vault.read(file);
     const { metadata, body } = parseFrontmatter(content);
 
-    clearMemMasterMetadata(metadata);
+    Object.keys(metadata).forEach((key) => {
+        if (key.startsWith("memmaster-")) {
+            delete metadata[key];
+        }
+    });
 
     await plugin.app.vault.modify(file, buildContentWithOptionalFrontmatter(metadata, body));
-    new Notice(plugin.i18n.t('notices.cardReset'));
+    new Notice(plugin.i18n.t('notices.memMasterMetadataCleared'));
     plugin.events.trigger(PLUGIN_EVENTS.CARD_UPDATED);
+    plugin.events.trigger(PLUGIN_EVENTS.TEST_UPDATED);
 
     return true;
+}
+
+export async function resetLegacyReviewMetadataToFsrs(plugin: MemMasterPlugin): Promise<number> {
+    const now = new Date();
+    let resetCount = 0;
+
+    for (const file of plugin.app.vault.getMarkdownFiles()) {
+        const content = await plugin.app.vault.cachedRead(file);
+        const { metadata, body } = parseFrontmatter(content);
+
+        if (!hasLegacySchedulingMetadata(metadata)) {
+            continue;
+        }
+
+        writeFsrsCardMetadata(metadata, createEmptyCard(now));
+        await plugin.app.vault.modify(file, buildContentWithFrontmatter(metadata, body));
+        resetCount++;
+    }
+
+    if (resetCount > 0) {
+        plugin.events.trigger(PLUGIN_EVENTS.CARD_UPDATED);
+        plugin.events.trigger(PLUGIN_EVENTS.TEST_UPDATED);
+    }
+
+    return resetCount;
 }
 
 export async function makeFlashcard(plugin: MemMasterPlugin, file: TFile): Promise<boolean> {
@@ -143,10 +268,7 @@ export async function makeFlashcard(plugin: MemMasterPlugin, file: TFile): Promi
 
     // Initialize metadata for new flashcard
     const now = new Date();
-    metadata["memmaster-next-review"] = now.toISOString().split("T")[0];
-    metadata["memmaster-stage"] = "0";
-    delete metadata["memmaster-completed"];
-    delete metadata["memmaster-completed-at"];
+    writeFsrsCardMetadata(metadata, createEmptyCard(now));
 
     if (plugin.settings.sourceMode === 'tag') {
         // Add tag to content

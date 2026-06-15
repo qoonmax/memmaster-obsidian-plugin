@@ -3,6 +3,7 @@ export const PLUGIN_EVENTS = {
     CARD_UPDATED: 'memmaster:card-updated',
     CARD_CREATED: 'memmaster:card-created',
     CARD_DELETED: 'memmaster:card-deleted',
+    TEST_UPDATED: 'memmaster:test-updated',
     SETTINGS_UPDATED: 'memmaster:settings-updated',
 } as const;
 

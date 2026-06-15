@@ -1,42 +1,49 @@
-# MemMaster Flashcards
+# MemMaster Flashcards + AI Tests
 
-A simple yet powerful spaced repetition plugin that helps you memorize your Obsidian notes using flashcards, spaced repetition, active recall, and review scheduling.
+A simple yet powerful spaced repetition plugin that helps you memorize your Obsidian notes using flashcards, AI-generated tests, quizzes, spaced repetition, active recall, and review scheduling.
 
 ![Banner](docs/screenshots/img_1.png)
-![Review List](docs/screenshots/img_2.png)
-![Flashcard Review](docs/screenshots/img_3.png)
+![Review List](docs/screenshots/review-list.jpg)
+![Flashcard Review](docs/screenshots/flashcard-review.jpg)
+![Test Review](docs/screenshots/test-review.jpg)
+![Answered Test Review](docs/screenshots/test-review-answered.jpg)
 
 ## Features
 
 - **Turn any note into a flashcard** — by tag or folder
-- **Review list** — shows all cards due for review today, sorted by urgency
-- **Completed cards** — mastered cards are moved to a separate Completed tab
-- **Review completed cards again** — reset completed cards and return them to the review flow
-- **Difficulty rating** — mark cards as Easy, Medium, or Hard
-- **Smart scheduling** — calculates review intervals automatically
+- **Review list** — shows all cards due for review now, sorted by urgency
+- **Difficulty rating** — mark cards as Again, Hard, Good, or Easy
+- **FSRS scheduling** — calculates adaptive review intervals with the Free Spaced Repetition Scheduler
+- **AI-generated tests** — generate multiple-choice tests and quizzes from flashcards
+- **OpenAI and DeepSeek support** — choose an AI provider and model for test generation
+- **Tests review mode** — answer generated tests in a dedicated review flow with explanations
+- **Markdown test files** — generated tests are saved in your vault and linked to source cards
 - **Character count warning** — helps keep flashcard notes focused and easy to review
 - **Keyboard shortcuts** — quick review without leaving the keyboard
 - **Responsive layout** — works better on smaller screens and mobile devices
-- **Multilingual** — multiple language support
-- **Anonymous cloud connection** — cloud features work without an account, email, or password
+- **Multilingual interface** — English and Russian translations
 
 ## How It Works
 
 1. Mark a note as a flashcard by command, tag, or folder.
 2. The plugin adds metadata to track your review progress.
-3. Review cards when they're due and rate each card as Easy, Medium, or Hard.
-4. Cards are rescheduled based on your rating:
-   - **Easy** → longer interval (`2^stage` days)
-   - **Medium** → moderate interval (`1.5^stage` days)
-   - **Hard** → shorter interval (`1.2^stage` days)
-5. After 10 successful reviews, the card is considered completed and moved out of the active review queue.
-6. Completed cards remain available in the Completed tab and can be reset if you want to review them again.
+3. Review cards when they're due and rate each card as Again, Hard, Good, or Easy.
+4. Optionally generate AI tests from a flashcard using OpenAI or DeepSeek.
+5. Review generated tests in the Tests mode and choose the correct answer.
+6. Cards and tests are rescheduled by FSRS based on the current memory state and your rating or answer.
+7. Due cards and tests return to the review queue when their scheduled review time arrives.
 
 ## Algorithm
 
-MemMaster uses a simplified version of the SM-2 (SuperMemo 2) algorithm.
+MemMaster uses FSRS (Free Spaced Repetition Scheduler) through the `ts-fsrs` package. Short-term minute-based learning steps are disabled, so scheduled reviews are at least one day apart. Each card stores its FSRS memory state in frontmatter: due time, state, stability, difficulty, scheduled interval, repetition count, lapse count, learning step, and last review time.
 
-Unlike the original SM-2 algorithm, it doesn't use an "ease factor" coefficient. Instead, fixed base values are applied for each difficulty level, making the system more predictable and easier to understand.
+When upgrading from the legacy stage-based scheduler to FSRS, MemMaster resets old review state once and starts legacy cards from a fresh FSRS state.
+
+## AI Tests
+
+MemMaster can generate up to 3 multiple-choice tests from a source flashcard. Tests use OpenAI or DeepSeek, are saved as Markdown files in your vault, and include the question, answer options, correct answer, explanation, source card link, review time, and FSRS state.
+
+Generated tests appear in the Tests mode of the review list. Correct answers are scheduled as Good; wrong answers are scheduled as Again and return according to the FSRS schedule.
 
 ## Installation
 
@@ -44,28 +51,11 @@ Unlike the original SM-2 algorithm, it doesn't use an "ease factor" coefficient.
 2. Click **Browse** and search for **MemMaster**.
 3. Click **Install**, then **Enable**.
 4. Configure your preferred flashcard source, such as tag or folder, in plugin settings.
-
-## MemMaster Cloud
-
-MemMaster Cloud helps you create practice tests from your review cards and take them later. You can also enable browser push notifications to get reminders when cards are ready to review.
-
-To make this work without registration, MemMaster automatically creates a private recovery key for each vault. No account is required: you do not need to enter an email or create a password.
-
-The recovery key is issued by MemMaster Cloud and stored in the plugin settings through Obsidian plugin data. It is sent only in request bodies when checking a connection and is never added to URLs.
-
-To use the same cloud connection on another device:
-
-1. On the old Obsidian installation, open MemMaster settings and click **Copy recovery key**.
-2. On the new Obsidian installation, open MemMaster settings and click **Connect an existing key**.
-3. Paste the copied key.
-
-If a saved key is no longer available, the settings panel offers to create a new connection. Previous cloud data remains accessible only through its saved recovery key.
+5. To use AI tests, enable tests in settings, choose OpenAI or DeepSeek, add your API key, and select a tests folder.
 
 ## Privacy
 
-MemMaster can send note content to MemMaster Cloud when you ask it to generate practice tests from your review cards. If you enable browser push notifications, MemMaster Cloud can notify you when cards are ready for review. No account is required. A private recovery key identifies your cloud connection.
-
-When a cloud feature is used, MemMaster Cloud may receive the note path and note content needed to generate the requested result. The recovery key is stored in this vault's plugin settings. Creating a new connection creates a separate anonymous cloud context.
+MemMaster stores review metadata, generated tests, and plugin settings in your Obsidian vault. Flashcard review is local-only. When you generate AI tests, the source card content is sent to your selected provider, OpenAI or DeepSeek, using the API key stored in your local plugin settings.
 
 ## Usage
 
@@ -73,10 +63,6 @@ When a cloud feature is used, MemMaster Cloud may receive the note path and note
 |---------|-------------|
 | `Open Review List View` | Open the review panel |
 | `Make current document a flashcard` | Convert current note to flashcard |
-| `Mark current card as Easy/Medium/Hard` | Rate card difficulty |
-
-## Completed Cards
-
-When a card reaches the final review stage, MemMaster marks it as completed instead of removing all plugin metadata.
-
-Completed cards are excluded from the regular review queue, but they remain visible in the Completed tab. You can reset a completed card if you want to review it again.
+| `Clear MemMaster metadata from current document` | Remove all `memmaster-*` frontmatter fields from the current note |
+| `Mark current card as Again/Hard/Good/Easy` | Rate card recall |
+| `Generate test` button | Generate AI tests from the current flashcard |

@@ -5,16 +5,15 @@ import MemMasterPluginSettingTab from './settings/ui';
 import ReviewListView from './review-list/ui';
 import { syncFlashcardButtons } from './review-flashcard/ui';
 import { I18n } from './i18n/i18n';
-import { updateCardMetadata, makeFlashcard } from './core/scheduler';
-import { isFileCompleted, isFileFlashcard } from './core/finder';
+import { clearAllMemMasterMetadata, resetLegacyReviewMetadataToFsrs, updateCardMetadata, makeFlashcard } from './core/scheduler';
+import { isFileFlashcard } from './core/finder';
 import { sleep } from './core/utils';
-import { isValidUserKey } from './cloud/identity';
-import { checkCloudUserStatus, CloudUserStatus, createCloudUser } from './cloud/client';
+
+const FSRS_MIGRATION_VERSION = '1.1.0';
 
 export default class MemMasterPlugin extends Plugin {
 	settings: MemMasterPluginSettings;
 	private observer: MutationObserver;
-	private cloudConnectionCreation: Promise<boolean> | null = null;
 	public events: Events;
 	public i18n: I18n;
 
@@ -27,6 +26,8 @@ export default class MemMasterPlugin extends Plugin {
 
 		// Load settings
 		this.settings = await loadSettings(this);
+
+		await this.migrateLegacyReviewMetadata();
 
 		// Create MutationObserver
 		this.observer = new MutationObserver((_mutations) => {
@@ -114,28 +115,13 @@ export default class MemMasterPlugin extends Plugin {
 
 		// Add hotkey commands for marking cards
 		this.addCommand({
-			id: 'mark-card-easy',
-			name: this.i18n.t('commands.markAsEasy'),
+			id: 'mark-card-again',
+			name: this.i18n.t('commands.markAsAgain'),
 			checkCallback: (checking: boolean) => {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile) {
 					if (!checking) {
-						void this.markCardWithDifficulty(activeFile, 'easy');
-					}
-					return true;
-				}
-				return false;
-			},
-		});
-
-		this.addCommand({
-			id: 'mark-card-medium',
-			name: this.i18n.t('commands.markAsMedium'),
-			checkCallback: (checking: boolean) => {
-				const activeFile = this.app.workspace.getActiveFile();
-				if (activeFile) {
-					if (!checking) {
-						void this.markCardWithDifficulty(activeFile, 'medium');
+						void this.markCardWithRating(activeFile, 'again');
 					}
 					return true;
 				}
@@ -150,7 +136,37 @@ export default class MemMasterPlugin extends Plugin {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile) {
 					if (!checking) {
-						void this.markCardWithDifficulty(activeFile, 'hard');
+						void this.markCardWithRating(activeFile, 'hard');
+					}
+					return true;
+				}
+				return false;
+			},
+		});
+
+		this.addCommand({
+			id: 'mark-card-good',
+			name: this.i18n.t('commands.markAsGood'),
+			checkCallback: (checking: boolean) => {
+				const activeFile = this.app.workspace.getActiveFile();
+				if (activeFile) {
+					if (!checking) {
+						void this.markCardWithRating(activeFile, 'good');
+					}
+					return true;
+				}
+				return false;
+			},
+		});
+
+		this.addCommand({
+			id: 'mark-card-easy',
+			name: this.i18n.t('commands.markAsEasy'),
+			checkCallback: (checking: boolean) => {
+				const activeFile = this.app.workspace.getActiveFile();
+				if (activeFile) {
+					if (!checking) {
+						void this.markCardWithRating(activeFile, 'easy');
 					}
 					return true;
 				}
@@ -173,9 +189,22 @@ export default class MemMasterPlugin extends Plugin {
 			},
 		});
 
-		this.addSettingTab(new MemMasterPluginSettingTab(this.app, this));
+		this.addCommand({
+			id: 'clear-metadata',
+			name: this.i18n.t('commands.clearMemMasterMetadata'),
+			checkCallback: (checking: boolean) => {
+				const activeFile = this.app.workspace.getActiveFile();
+				if (activeFile) {
+					if (!checking) {
+						void clearAllMemMasterMetadata(this, activeFile);
+					}
+					return true;
+				}
+				return false;
+			},
+		});
 
-		void this.ensureCloudConnection();
+		this.addSettingTab(new MemMasterPluginSettingTab(this.app, this));
 	}
 
 	onunload() {
@@ -197,67 +226,27 @@ export default class MemMasterPlugin extends Plugin {
 
 	async loadSettings() {
 		this.settings = await loadSettings(this);
-		void this.ensureCloudConnection();
 	}
 
 	async saveSettings() {
 		await saveSettings(this, this.settings);
 	}
 
-	async createCloudConnection(): Promise<boolean> {
-		if (this.cloudConnectionCreation) {
-			return this.cloudConnectionCreation;
+	private async migrateLegacyReviewMetadata() {
+		if (this.settings.fsrsMigrationVersion === FSRS_MIGRATION_VERSION) {
+			return;
 		}
 
-		const creation = this.performCreateCloudConnection();
-		this.cloudConnectionCreation = creation;
+		const resetCount = await resetLegacyReviewMetadataToFsrs(this);
+		this.settings.fsrsMigrationVersion = FSRS_MIGRATION_VERSION;
+		await this.saveSettings();
 
-		try {
-			return await creation;
-		} finally {
-			if (this.cloudConnectionCreation === creation) {
-				this.cloudConnectionCreation = null;
-			}
+		if (resetCount > 0) {
+			new Notice(this.i18n.t('notices.legacyStateReset', { count: resetCount.toString() }));
 		}
 	}
 
-	private async performCreateCloudConnection(): Promise<boolean> {
-		const response = await createCloudUser(this);
-
-		if (!response) {
-			return false;
-		}
-
-		const oldUserKey = this.settings.userKey;
-
-		try {
-			this.settings.userKey = response.userKey;
-			await this.saveSettings();
-			return true;
-		} catch {
-			this.settings.userKey = oldUserKey;
-			new Notice(this.i18n.t('notices.connectionCreationFailed'));
-			return false;
-		}
-	}
-
-	async checkCloudConnectionStatus(userKey = this.settings.userKey): Promise<CloudUserStatus> {
-		if (!userKey || !isValidUserKey(userKey)) {
-			return { state: 'bad_request' };
-		}
-
-		return checkCloudUserStatus(userKey);
-	}
-
-	async ensureCloudConnection(): Promise<boolean> {
-		if (this.settings.userKey) {
-			return true;
-		}
-
-		return this.createCloudConnection();
-	}
-
-	private async markCardWithDifficulty(file: TFile, difficulty: 'easy' | 'medium' | 'hard') {
+	private async markCardWithRating(file: TFile, rating: 'again' | 'hard' | 'good' | 'easy') {
 		// Check if the file is a flashcard
 		const isFlashcard = await isFileFlashcard(this, file);
 		
@@ -266,14 +255,8 @@ export default class MemMasterPlugin extends Plugin {
 			return;
 		}
 
-		const isCompleted = await isFileCompleted(this, file);
-		if (isCompleted) {
-			new Notice(this.i18n.t('notices.cardAlreadyMastered'));
-			return;
-		}
-
 		// Update card metadata
-		await updateCardMetadata(this, file, difficulty);
+		await updateCardMetadata(this, file, rating);
 	}
 
 	private async makeDocumentFlashcard(file: TFile) {

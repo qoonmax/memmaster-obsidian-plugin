@@ -4,10 +4,12 @@
   },
   "commands": {
     "openReviewListView": "Open Review List View",
-    "markAsEasy": "Mark current card as Easy",
-    "markAsMedium": "Mark current card as Medium",
+    "markAsAgain": "Mark current card as Again",
     "markAsHard": "Mark current card as Hard",
-    "makeFlashcard": "Make current document a flashcard"
+    "markAsGood": "Mark current card as Good",
+    "markAsEasy": "Mark current card as Easy",
+    "makeFlashcard": "Make current document a flashcard",
+    "clearMemMasterMetadata": "Clear MemMaster metadata from current document"
   },
   "settings": {
     "flashcardSourceHeading": "Flashcard source settings",
@@ -34,40 +36,52 @@
       "name": "Open cards in reading mode",
       "desc": "Open flashcards from review list in reading mode (preview). Important: enabling this setting is required for review buttons to appear on cards."
     },
-    "cloudIdentity": {
-      "heading": "MemMaster Cloud",
-      "desc": "Connect without an account. A recovery key lets you connect this vault on another device.",
-      "calloutTitle": "Tests and reminders in the cloud",
-      "calloutBody": "MemMaster Cloud helps you create tests from your review cards and take them later. You can also enable browser push notifications to get reminders when cards are ready to review.",
-      "statusChecking": "Checking connection...",
-      "statusCheckingDesc": "MemMaster is verifying the recovery key with the server.",
-      "statusConnected": "Connected",
-      "statusConnectedDesc": "Cloud features are ready. Connection created: {{date}}.",
-      "statusMissing": "Cloud is not connected",
-      "statusMissingDesc": "Create a new connection to use cloud features.",
-      "statusNotFound": "Connection not found",
-      "statusNotFoundDesc": "The saved key no longer works. Create a new connection or enter another recovery key.",
-      "statusInvalid": "Invalid recovery key",
-      "statusInvalidDesc": "Create a new connection or enter a valid recovery key.",
-      "statusUnavailable": "Cloud is unreachable",
-      "statusUnavailableDesc": "Your connection has not changed. Try the check again later.",
-      "backupKey": "Recovery key",
-      "copyBackupKey": "Copy recovery key",
-      "copyBackupKeyDesc": "Keep this key private. Anyone with this key can access your MemMaster cloud data.",
-      "importBackupKey": "Connect an existing key",
-      "importBackupKeyDesc": "Use a recovery key from another device to work with the same cloud data.",
-      "importModalTitle": "Connect an existing key",
-      "importModalDesc": "Paste your MemMaster recovery key. After verification, this vault will use the cloud data linked to that key.",
-      "importPlaceholder": "mmr_...",
-      "importButton": "Connect",
-      "createConnection": "Create new connection",
-      "createModalTitle": "Create a new connection?",
-      "createModalDesc": "A new recovery key will be saved for this vault. The previous connection remains accessible only if you saved its key.",
-      "tryAgain": "Try again",
-      "cancel": "Cancel"
+    "testsHeading": "Test settings",
+    "testsEnabled": {
+      "name": "Enable tests",
+      "desc": "Show test generation and the test review mode"
+    },
+    "testsFolderName": {
+      "name": "Tests folder",
+      "desc": "Folder where MemMaster will save generated tests",
+      "placeholder": "memmaster_tests"
+    },
+    "aiProvider": {
+      "name": "Generation provider",
+      "desc": "Choose which provider API key should be used",
+      "openai": "OpenAI",
+      "deepseek": "DeepSeek"
+    },
+    "openaiApiKey": {
+      "name": "OpenAI API key",
+      "desc": "Used locally only when requesting test generation",
+      "placeholder": "sk-..."
+    },
+    "openaiModel": {
+      "name": "OpenAI model",
+      "desc": "OpenAI model used for test generation"
+    },
+    "deepseekApiKey": {
+      "name": "DeepSeek API key",
+      "desc": "Used locally only when requesting test generation",
+      "placeholder": "sk-..."
+    },
+    "deepseekModel": {
+      "name": "DeepSeek model",
+      "desc": "DeepSeek model used for test generation"
+    },
+    "testClientPrompt": {
+      "name": "Client prompt",
+      "desc": "Additional editable rules mixed into each test generation request",
+      "placeholder": "Generation rules..."
     },
     "hotkeysHeading": "Hotkeys settings",
     "hotkeysDesc": "Configure keyboard shortcuts for quick card review. Set hotkeys in Settings > Hotkeys > MemMaster.",
+    "support": {
+      "title": "Need help?",
+      "desc": "If you run into a problem, please ",
+      "linkLabel": "create an issue on GitHub"
+    },
     "sourceMode": {
       "tag": "Tag",
       "folder": "Folder"
@@ -76,33 +90,42 @@
   "reviewFlashcard": {
     "difficultyQuestion": "How difficult was this card?",
     "lengthWarning": "This note is {{count}}/{{limit}} characters. Shorter notes work better for review.",
-    "easy": "Easy",
-    "medium": "Medium",
+    "again": "Again",
     "hard": "Hard",
-    "completedReviewAction": "This card is completed. Clear metadata to review it again.",
-    "reviewAgain": "Review again"
+    "good": "Good",
+    "easy": "Easy",
+    "generateTest": "Generate test",
+    "generateTestExistingStatus": "existing tests: {{count}}",
+    "generateTestNoTestsStatus": "no tests yet",
+    "generatingTest": "Generating..."
   },
   "reviewList": {
     "viewTitle": "Repetition flashcards",
     "tabs": {
-      "review": "For review",
-      "completed": "Completed"
+      "review": "For review"
+    },
+    "modes": {
+      "cards": "Cards",
+      "tests": "Tests"
     },
     "searchPlaceholder": "Search flashcards...",
     "noFlashcards": "No flashcards due for review.",
-    "noCompletedFlashcards": "No completed flashcards yet.",
     "noSearchResults": "No flashcards found matching your search.",
     "dueCount": "Ready for review: {{count}}",
-    "completedCount": "Completed: {{count}}",
+    "testsDueCount": "Tests due: {{count}}",
     "overdueByDays": "Overdue by {{days}} days",
     "dueToday": "Due today",
-    "completed": "Completed",
-    "completedOn": "Completed {{date}}",
     "sortLabel": "Sort:",
     "sortOldestFirst": "Most overdue first",
     "sortNewestFirst": "Least overdue first",
-    "sortCompletedNewestFirst": "Recently completed first",
-    "sortCompletedOldestFirst": "Oldest completed first"
+    "testsDisabled": "Tests are disabled in settings.",
+    "noTests": "No tests due for review.",
+    "testSource": "Source: {{name}}",
+    "testAnsweredCorrect": "Correct",
+    "testAnsweredWrong": "Incorrect",
+    "showNextTest": "Next test",
+    "chooseAnswer": "Choose an answer",
+    "testExplanation": "Explanation"
   },
   "notices": {
     "notAFlashcard": "This document is not a flashcard",
@@ -111,19 +134,14 @@
     "tagAdded": "Tag added: {{tag}}",
     "movedToFolder": "Moved to folder: {{folder}}",
     "alreadyFlashcard": "This document is already a flashcard",
-    "cardMastered": "Card mastered! Added to completed.",
-    "cardAlreadyMastered": "This card is already completed.",
-    "cardReset": "Metadata cleared. This card can be reviewed again.",
+    "memMasterMetadataCleared": "All MemMaster metadata cleared from this document.",
+    "legacyStateReset": "Reset spaced repetition state for {{count}} legacy MemMaster items.",
     "cardUpdated": "Updated card: next review on {{date}}",
-    "backupKeyCopied": "Recovery key copied",
-    "backupKeyCopyFailed": "Could not copy recovery key",
-    "backupKeyImported": "Cloud connection restored",
-    "backupKeyNotFound": "No connection was found for this key",
-    "invalidBackupKey": "Invalid recovery key",
-    "connectionCreated": "New cloud connection created",
-    "connectionCreationFailed": "Could not create a MemMaster connection.",
-    "connectionSaveFailed": "Could not save the connection in settings.",
-    "cloudUnavailable": "MemMaster cloud is temporarily unavailable. Please try again later.",
-    "cloudNetworkError": "Could not connect to MemMaster cloud."
+    "testsDisabled": "Tests are disabled in settings",
+    "missingApiKey": "Add an API key for the selected provider in settings",
+    "testGenerationStarted": "Generating tests...",
+    "testGenerationFailed": "Could not generate tests: {{message}}",
+    "testsGenerated": "Generated tests: {{count}}",
+    "testUpdated": "Updated test: next review on {{date}}"
   }
 }

@@ -1,10 +1,10 @@
 {
 	"id": "memmaster",
-	"name": "MemMaster Flashcards",
-	"version": "1.0.4",
+	"name": "MemMaster Flashcards + AI Tests",
+	"version": "1.1.0",
 	"minAppVersion": "1.7.2",
-	"description": "Create flashcards from notes and study with spaced repetition, active recall, review scheduling, memory retention, and study reminders.",
+	"description": "Create flashcards and AI-generated tests from notes. Study with spaced repetition, active recall, quizzes, review scheduling, memory retention, OpenAI, and DeepSeek.",
 	"author": "qoonmax",
 	"authorUrl": "https://github.com/qoonmax",
 	"isDesktopOnly": false
-  }
+}
