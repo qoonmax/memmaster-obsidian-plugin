@@ -3,6 +3,7 @@
 A simple yet powerful spaced repetition plugin that helps you memorize your Obsidian notes using flashcards, AI-generated tests, quizzes, spaced repetition, active recall, and review scheduling.
 
 ![Banner](docs/screenshots/img_1.png)
+[![Watch MemMaster demo on YouTube](docs/screenshots/preview.jpg)](https://youtu.be/HXbxbJiPYd0)
 ![Review List](docs/screenshots/review-list.jpg)
 ![Flashcard Review](docs/screenshots/flashcard-review.jpg)
 ![Test Review](docs/screenshots/test-review.jpg)
